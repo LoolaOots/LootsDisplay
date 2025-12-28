@@ -82,6 +82,19 @@ struct SensorFrame: Codable {
     let pressure: Double
 }
 
+struct RecordingSession: Identifiable {
+    let id = UUID()
+    let startTime: Date
+    let frames: [SensorFrame]
+    
+    var title: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .medium
+        return formatter.string(from: startTime)
+    }
+}
+
 class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let motionManager = CMMotionManager()
     private let altimeter = CMAltimeter()
@@ -100,6 +113,9 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var recordedData: [SensorFrame] = []
     @Published var secondsElapsed = 0 // Track the recording duration
         
+    @Published var sessions: [RecordingSession] = []
+    
+    
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? // Timer for the UI counter
     
@@ -141,9 +157,16 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         isRecording = false
         recordingTimer?.invalidate()
         secondsTimer?.invalidate()
+        
+        // Save the finished recording as a session
+        if !recordedData.isEmpty {
+            let newSession = RecordingSession(startTime: Date().addingTimeInterval(-Double(secondsElapsed)), frames: recordedData)
+                sessions.insert(newSession, at: 0) // Put the most recent at the top
+        }
+        
         recordingTimer = nil
         secondsTimer = nil
-        saveDataToDisk()
+        //saveDataToDisk()
     }
 
     private func saveDataToDisk() {
