@@ -5,73 +5,12 @@
 ////  Created by Nat on 12/28/25.
 ////
 
-//
-//import Foundation
-//import CoreMotion
-//import CoreLocation
-//import Combine
-//
-//class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-//    private let motionManager = CMMotionManager()
-//    private let altimeter = CMAltimeter()
-//    private let locationManager = CLLocationManager()
-//    
-//    // Motion Data
-//    @Published var acceleration = (x: 0.0, y: 0.0, z: 0.0)
-//    @Published var attitude = (pitch: 0.0, roll: 0.0, yaw: 0.0)
-//    
-//    // Environment & GPS
-//    @Published var altitude: Double = 0.0
-//    @Published var pressure: Double = 0.0
-//    @Published var locationData: CLLocation?
-//    @Published var heading: Double = 0.0
-//
-//    override init() {
-//        super.init()
-//        locationManager.delegate = self
-//        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-//        locationManager.requestWhenInUseAuthorization()
-//    }
-//
-//    func startAllSensors() {
-//        // 1. Device Motion (Gyro + Accel + Attitude)
-//        if motionManager.isDeviceMotionAvailable {
-//            motionManager.deviceMotionUpdateInterval = 0.1
-//            motionManager.startDeviceMotionUpdates(to: .main) { data, _ in
-//                guard let motion = data else { return }
-//                self.acceleration = (motion.userAcceleration.x, motion.userAcceleration.y, motion.userAcceleration.z)
-//                self.attitude = (motion.attitude.pitch, motion.attitude.roll, motion.attitude.yaw)
-//            }
-//        }
-//
-//        // 2. Altimeter (Pressure & Relative Altitude)
-//        if CMAltimeter.isRelativeAltitudeAvailable() {
-//            altimeter.startRelativeAltitudeUpdates(to: .main) { data, _ in
-//                guard let alt = data else { return }
-//                self.altitude = alt.relativeAltitude.doubleValue
-//                self.pressure = alt.pressure.doubleValue // in kilopascals
-//            }
-//        }
-//
-//        // 3. Location & Heading
-//        locationManager.startUpdatingLocation()
-//        locationManager.startUpdatingHeading()
-//    }
-//
-//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-//        self.locationData = locations.last
-//    }
-//
-//    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-//        self.heading = newHeading.magneticHeading
-//    }
-//}
 import Foundation
 import CoreMotion
 import CoreLocation
 import Combine
 
-// Structure to hold one "frame" of data
+
 struct SensorFrame: Codable {
     let timestamp: Date
     let pitch: Double
@@ -82,8 +21,8 @@ struct SensorFrame: Codable {
     let pressure: Double
 }
 
-struct RecordingSession: Identifiable {
-    let id = UUID()
+struct RecordingSession: Identifiable, Codable {
+    var id = UUID()
     let startTime: Date
     let frames: [SensorFrame]
     
@@ -115,9 +54,12 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
     @Published var sessions: [RecordingSession] = []
     
+    @Published var showLimitAlert = false // For the "Max Reached" popup
     @Published var showAlert = false
     @Published var alertTitle = ""
     @Published var alertMessage = ""
+    
+    @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
     
     
     private var recordingTimer: Timer?
@@ -125,6 +67,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     override init() {
         super.init()
+        LocalFileManager.setupFolder()
+        self.sessions = LocalFileManager.loadSessions()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestWhenInUseAuthorization()
@@ -135,7 +79,13 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         if isRecording {
             stopRecording()
         } else {
-            startRecording()
+            DispatchQueue.main.async {
+                if self.sessions.count >= 3 {
+                    self.showLimitAlert = true
+                } else {
+                    self.startRecording()
+                }
+            }
         }
     }
 
@@ -165,17 +115,41 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Save the finished recording as a session
         if !recordedData.isEmpty {
             let newSession = RecordingSession(startTime: Date().addingTimeInterval(-Double(secondsElapsed)), frames: recordedData)
-                sessions.insert(newSession, at: 0) // Put the most recent at the top
+            LocalFileManager.saveSession(newSession)
+            self.sessions = LocalFileManager.loadSessions()
         }
         
         recordingTimer = nil
         secondsTimer = nil
-        //saveDataToDisk()
+        saveDataToDisk() //DELETE OR CHANGE LATER
     }
 
     private func saveDataToDisk() {
         print("Stopped! Captured \(recordedData.count) samples.")
         // Here you could convert recordedData to a JSON or CSV file
+    }
+    
+    func deleteSession(at offsets: IndexSet) {
+        offsets.forEach { index in
+            let session = sessions[index]
+            LocalFileManager.deleteSession(id: session.id)
+        }
+        self.sessions = LocalFileManager.loadSessions() // Refresh list
+        DispatchQueue.main.async {
+            self.recordedData = []
+            self.secondsElapsed = 0
+        }
+    }
+    
+    func deleteAllSessions() {
+        sessions.forEach { session in
+            LocalFileManager.deleteSession(id: session.id)
+        }
+        DispatchQueue.main.async {
+            self.sessions = LocalFileManager.loadSessions()
+            self.recordedData = []
+            self.secondsElapsed = 0
+        }
     }
 
     func startAllSensors() {

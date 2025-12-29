@@ -1,47 +1,3 @@
-//
-//
-//import SwiftUI
-//
-//struct ContentView: View {
-//    @StateObject var sensors = SensorManager()
-//
-//    var body: some View {
-//        NavigationView {
-//            List {
-//                Section(header: Text("Motion & Attitude")) {
-//                    SensorRow(label: "Pitch", value: String(format: "%.2f°", sensors.attitude.pitch * 180 / .pi))
-//                    SensorRow(label: "Roll", value: String(format: "%.2f°", sensors.attitude.roll * 180 / .pi))
-//                    SensorRow(label: "User Accel X", value: String(format: "%.2f g", sensors.acceleration.x))
-//                }
-//
-//                Section(header: Text("GPS & Environment")) {
-//                    SensorRow(label: "Latitude", value: "\(sensors.locationData?.coordinate.latitude ?? 0.0)")
-//                    SensorRow(label: "Longitude", value: "\(sensors.locationData?.coordinate.longitude ?? 0.0)")
-//                    SensorRow(label: "Heading", value: String(format: "%.1f°", sensors.heading))
-//                    SensorRow(label: "Pressure", value: String(format: "%.2f kPa", sensors.pressure))
-//                }
-//            }
-//            .navigationTitle("Live Sensor Data")
-//            .onAppear {
-//                sensors.startAllSensors()
-//            }
-//        }
-//    }
-//}
-//
-//struct SensorRow: View {
-//    let label: String
-//    let value: String
-//    
-//    var body: some View {
-//        HStack {
-//            Text(label).foregroundColor(.secondary)
-//            Spacer()
-//            Text(value).bold().monospacedDigit()
-//        }
-//    }
-//}
-
 import SwiftUI
 
 struct ContentView: View {
@@ -50,6 +6,11 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
+                NavigationLink(
+                        destination: DataHistoryView(sensors: sensors),
+                        isActive: $sensors.navigateToHistory
+                ) { EmptyView() }
+                
                 List {
                     Section(header: Text("Recording Status")) {
                         HStack {
@@ -111,12 +72,23 @@ struct ContentView: View {
                             .background(sensors.sessions.isEmpty ? Color.gray : Color.blue)
                             .cornerRadius(10)
                             }
-                            .disabled(sensors.sessions.isEmpty) // Grayed out and unusable if empty
+                            .disabled(sensors.sessions.isEmpty)
                             }
                             .padding()
                         }
                         .navigationTitle("Live Sensor Data")
                         .onAppear { sensors.startAllSensors() }
+                        .alert("Recording Limit Reached", isPresented: $sensors.showLimitAlert) {
+                            Button("OK", role: .cancel) {
+                                sensors.showLimitAlert = false
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    sensors.navigateToHistory = true
+                                }
+                            }
+                        } message: {
+                            Text("You have reached the maximum saved recordings. Remove an existing entry to start a new session.")
+                        }
+            
         }
     }
 }
