@@ -115,6 +115,10 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
     @Published var sessions: [RecordingSession] = []
     
+    @Published var showAlert = false
+    @Published var alertTitle = ""
+    @Published var alertMessage = ""
+    
     
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? // Timer for the UI counter
@@ -216,4 +220,34 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         self.heading = newHeading.magneticHeading
     }
+    
+    func exportSession(_ session: RecordingSession) {
+        guard let url = URL(string: "https://d338dd53d6ef.ngrok.app/400-route") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        do {
+            let jsonData = try JSONEncoder().encode(session.frames)
+            request.httpBody = jsonData
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                let httpResponse = response as? HTTPURLResponse
+                let statusCode = httpResponse?.statusCode ?? 0
+                let newTitle = (statusCode == 200) ? "Export Successful" : "Export Failed"
+                DispatchQueue.main.async {
+                    self.showAlert = false
+                    
+                    self.alertTitle = newTitle
+                    self.showAlert = true
+                }
+            }.resume()
+        } catch {
+            DispatchQueue.main.async {
+                self.alertTitle = "Export Failed"
+                self.showAlert = true
+            }
+        }
+    }
 }
+

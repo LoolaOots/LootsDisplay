@@ -1,10 +1,3 @@
-//
-//  DataHistoryView.swift
-//  LootsDisplay
-//
-//  Created by Nat on 12/28/25.
-//
-
 import SwiftUI
 
 struct DataHistoryView: View {
@@ -12,18 +5,34 @@ struct DataHistoryView: View {
     
     var body: some View {
         List {
-            Section(header: Text("Recent Recordings")) {
+            Section(header: Text("Recorded Samples")) {
                 if sensors.sessions.isEmpty {
-                    Text("No data recorded yet.")
-                        .foregroundColor(.secondary)
+                    Text("No sessions found").foregroundColor(.secondary)
                 } else {
                     ForEach(sensors.sessions) { session in
-                        VStack(alignment: .leading) {
-                            Text(session.title) // Title is the Start Time
-                                .font(.headline)
-                            Text("\(session.frames.count) data points captured")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(session.title)
+                                    .font(.headline)
+                                Text("\(session.frames.count) frames captured")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Menu {
+                                Button(action: {
+                                    sensors.exportSession(session)
+                                }) {
+                                    Label("Export", systemImage: "square.and.arrow.up")
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis.circle")
+                                    .font(.title2)
+                                    .foregroundColor(.blue)
+                                    .padding(8)
+                            }
                         }
                         .padding(.vertical, 4)
                     }
@@ -31,6 +40,10 @@ struct DataHistoryView: View {
             }
         }
         .navigationTitle("History")
-        // The back button is automatically added by NavigationView
+        .alert(sensors.alertTitle, isPresented: $sensors.showAlert) {
+            Button("OK", role: .cancel) {
+                sensors.showAlert = false
+            }
+        }
     }
 }
