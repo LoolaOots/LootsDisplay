@@ -89,25 +89,34 @@ struct ContentView: View {
                         SensorRow(label: "Pressure", value: String(format: "%.2f kPa", sensors.pressure))
                     }
                 }
-                
-                // Start/Stop Button
-                Button(action: {
-                    sensors.toggleRecording()
-                }) {
-                    Text(sensors.isRecording ? "STOP RECORDING" : "START RECORDING")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(sensors.isRecording ? Color.red : Color.blue)
-                        .cornerRadius(10)
-                }
-                .padding()
-            }
-            .navigationTitle("Live Sensor Data")
-            .onAppear {
-                sensors.startAllSensors()
-            }
+                VStack(spacing: 12) {
+                    // Start/Stop Button
+                    Button(action: { sensors.toggleRecording() }) {
+                        Text(sensors.isRecording ? "STOP RECORDING" : "START RECORDING")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(sensors.isRecording ? Color.red : Color.blue)
+                            .cornerRadius(10)
+                        }
+
+                        // View Recorded Data Button
+                        NavigationLink(destination: DataHistoryView(sensors: sensors)) {
+                            Text("VIEW RECORDED DATA")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(sensors.sessions.isEmpty ? Color.gray : Color.blue)
+                            .cornerRadius(10)
+                            }
+                            .disabled(sensors.sessions.isEmpty) // Grayed out and unusable if empty
+                            }
+                            .padding()
+                        }
+                        .navigationTitle("Live Sensor Data")
+                        .onAppear { sensors.startAllSensors() }
         }
     }
 }
