@@ -40,13 +40,15 @@ struct SessionRowView: View {
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
-                Text(session.title)
-                    .font(.headline)
-                Text("\(session.frames.count) frames captured")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
+            NavigationLink(destination: SensorGraphView(session: session)) {
+                VStack(alignment: .leading) {
+                    Text(session.title)
+                        .font(.headline)
+                    Text("\(session.frames.count) frames captured")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    }
+                }
             
             Spacer()
             

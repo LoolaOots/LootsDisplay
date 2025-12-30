@@ -19,6 +19,7 @@ struct SensorFrame: Codable {
     let latitude: Double
     let longitude: Double
     let pressure: Double
+    let heading: Double
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -169,7 +170,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         accelX: motion.userAcceleration.x,
                         latitude: self.locationData?.coordinate.latitude ?? 0,
                         longitude: self.locationData?.coordinate.longitude ?? 0,
-                        pressure: self.pressure
+                        pressure: self.pressure,
+                        heading: self.heading
                     )
                     self.recordedData.append(frame)
                 }
