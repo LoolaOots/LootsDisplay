@@ -54,7 +54,12 @@ struct SessionRowView: View {
             
             Menu {
                 Button(action: {
-                    sensors.exportSession(session)
+                    NetworkManager.exportSession(session) { success, message in
+                        DispatchQueue.main.async {
+                            sensors.alertTitle = message
+                            sensors.showAlert = true
+                        }
+                    }
                 }) {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
@@ -64,6 +69,19 @@ struct SessionRowView: View {
                     .foregroundColor(.blue)
                     .padding(8)
             }
+            
+//            Menu {
+//                Button(action: {
+//                    sensors.exportSession(session)
+//                }) {
+//                    Label("Export", systemImage: "square.and.arrow.up")
+//                }
+//            } label: {
+//                Image(systemName: "ellipsis.circle")
+//                    .font(.title2)
+//                    .foregroundColor(.blue)
+//                    .padding(8)
+//            }
         }
         .padding(.vertical, 4)
     }
