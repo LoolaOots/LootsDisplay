@@ -1,139 +1,250 @@
 import SwiftUI
 import Charts
 
-// Data types
 enum SensorType: String, CaseIterable, Identifiable {
-    case pitch = "Pitch", roll = "Roll", accel = "Acceleration", heading = "Heading", pressure = "Pressure"
+    case pitch = "Pitch", roll = "Roll", yaw = "Yaw", heading = "Heading"
+    case accelX = "Accel X", accelY = "Accel Y", accelZ = "Accel Z"
+    case gForceX = "G-Force X", gForceY = "G-Force Y", gForceZ = "G-Force Z"
+    case gyroX = "Gyro X", gyroY = "Gyro Y", gyroZ = "Gyro Z"
+    case magX = "Mag X", magY = "Mag Y", magZ = "Mag Z"
+    case speed = "Speed", pressure = "Pressure"
+    
     var id: String { self.rawValue }
     
     var color: Color {
         switch self {
+        //Motion & Attitude (Primary Blues/Purples)
         case .pitch: return .blue
-        case .roll: return .green
-        case .accel: return .red
-        case .heading: return .orange
-        case .pressure: return .purple
+        case .roll: return .purple
+        case .yaw: return .cyan
+        
+        //Acceleration (Vibrant RGB)
+        case .accelX: return .red
+        case .accelY: return .green
+        case .accelZ: return .blue
+        
+        //GPS & Environment (Earth Tones)
+        case .speed: return .orange
+        case .heading: return .yellow
+        case .pressure: return .gray
+        
+        //Gyroscope (Muted RGB / Neon)
+        case .gyroX: return .pink
+        case .gyroY: return .mint
+        case .gyroZ: return .teal
+        
+        //Magnetometer (Deep/Dark Tones)
+        case .magX: return Color(red: 0.5, green: 0, blue: 0)
+        case .magY: return Color(red: 0, green: 0.4, blue: 0)
+        case .magZ: return Color(red: 0, green: 0, blue: 0.5)
+        
+        //G-Force (Indigo/High Contrast)
+        case .gForceX: return .indigo
+        case .gForceY: return .brown
+        case .gForceZ: return .black
         }
     }
 }
 
 struct SensorGraphView: View {
     let session: RecordingSession
-    
-    // State to track selected variables (all selected by default)
     @State private var selectedTypes: Set<SensorType> = Set(SensorType.allCases)
     
     var body: some View {
         VStack {
             List {
                 Section {
-                    // The Graph
                     Chart {
                         ForEach(Array(session.frames.enumerated()), id: \.offset) { index, frame in
+                            // Attitude
                             if selectedTypes.contains(.pitch) {
-                                LineMark(
-                                    x: .value("Time", index),
-                                    y: .value("Pitch", frame.pitch * 180 / .pi)
-                                )
-                                .foregroundStyle(by: .value("Series", "Pitch"))
+                                LineMark(x: .value("Time", index), y: .value("Pitch", frame.pitch * 180 / .pi))
+                                    .foregroundStyle(by: .value("Series", "Pitch"))
                             }
-                            
                             if selectedTypes.contains(.roll) {
-                                LineMark(
-                                    x: .value("Time", index),
-                                    y: .value("Roll", frame.roll * 180 / .pi)
-                                )
-                                .foregroundStyle(by: .value("Series", "Roll"))
+                                LineMark(x: .value("Time", index), y: .value("Roll", frame.roll * 180 / .pi))
+                                    .foregroundStyle(by: .value("Series", "Roll"))
                             }
-                            
-                            if selectedTypes.contains(.accel) {
-                                LineMark(
-                                    x: .value("Time", index),
-                                    y: .value("Accel", frame.accelX)
-                                )
-                                .foregroundStyle(by: .value("Series", "Acceleration"))
-                            }
-                            
                             if selectedTypes.contains(.heading) {
-                                LineMark(
-                                    x: .value("Time", index),
-                                    y: .value("Heading", frame.heading)
-                                )
-                                .foregroundStyle(by: .value("Series", "Heading"))
+                                LineMark(x: .value("Time", index), y: .value("Heading", frame.heading))
+                                    .foregroundStyle(by: .value("Series", "Heading"))
+                            }
+                            if selectedTypes.contains(.yaw) {
+                                LineMark(x: .value("Time", index), y: .value("Yaw", frame.yaw * 180 / .pi))
+                                    .foregroundStyle(by: .value("Series", "Yaw"))
+                            }
+                                    
+                            // Gyroscope (Rotation Rate)
+                            if selectedTypes.contains(.gyroX) {
+                                LineMark(x: .value("Time", index), y: .value("Gyro X", frame.gyroX))
+                                    .foregroundStyle(by: .value("Series", "Gyro X"))
+                            }
+                            if selectedTypes.contains(.gyroY) {
+                                LineMark(x: .value("Time", index), y: .value("Gyro Y", frame.gyroY))
+                                    .foregroundStyle(by: .value("Series", "Gyro Y"))
+                            }
+                            if selectedTypes.contains(.gyroZ) {
+                                LineMark(x: .value("Time", index), y: .value("Gyro Z", frame.gyroZ))
+                                    .foregroundStyle(by: .value("Series", "Gyro Z"))
                             }
                             
+                            // Magnetometer
+                            if selectedTypes.contains(.magX) {
+                                LineMark(x: .value("Time", index), y: .value("Mag X", frame.magX))
+                                    .foregroundStyle(by: .value("Series", "Mag X"))
+                            }
+                            if selectedTypes.contains(.magY) {
+                                LineMark(x: .value("Time", index), y: .value("Mag Y", frame.magY))
+                                    .foregroundStyle(by: .value("Series", "Mag Y"))
+                            }
+                            if selectedTypes.contains(.magZ) {
+                                LineMark(x: .value("Time", index), y: .value("Mag Z", frame.magZ))
+                                    .foregroundStyle(by: .value("Series", "Mag Z"))
+                            }
+                            
+                            // User Acceleration
+                            if selectedTypes.contains(.accelX) {
+                                LineMark(x: .value("Time", index), y: .value("Accel X", frame.accelX))
+                                    .foregroundStyle(by: .value("Series", "Accel X"))
+                            }
+                            if selectedTypes.contains(.accelY) {
+                                LineMark(x: .value("Time", index), y: .value("Accel Y", frame.accelY))
+                                    .foregroundStyle(by: .value("Series", "Accel Y"))
+                            }
+                            if selectedTypes.contains(.accelZ) {
+                                LineMark(x: .value("Time", index), y: .value("Accel Z", frame.accelZ))
+                                    .foregroundStyle(by: .value("Series", "Accel Z"))
+                            }
+                            
+                            // G-Force
+                            if selectedTypes.contains(.gForceX) {
+                                LineMark(x: .value("Time", index), y: .value("G-Force X", frame.gForceX))
+                                    .foregroundStyle(by: .value("Series", "G-Force X"))
+                            }
+                            if selectedTypes.contains(.gForceY) {
+                                LineMark(x: .value("Time", index), y: .value("G-Force Y", frame.gForceY))
+                                    .foregroundStyle(by: .value("Series", "G-Force Y"))
+                            }
+                            if selectedTypes.contains(.gForceZ) {
+                                LineMark(x: .value("Time", index), y: .value("G-Force Z", frame.gForceZ))
+                                    .foregroundStyle(by: .value("Series", "G-Force Z"))
+                            }
+                            
+                            // Environment
+                            if selectedTypes.contains(.speed) {
+                                LineMark(x: .value("Time", index), y: .value("Speed", frame.speed * 2.237))
+                                    .foregroundStyle(by: .value("Series", "Speed"))
+                            }
                             if selectedTypes.contains(.pressure) {
-                                LineMark(
-                                    x: .value("Time", index),
-                                    y: .value("Pressure", frame.pressure)
-                                )
-                                .foregroundStyle(by: .value("Series", "Pressure"))
+                                LineMark(x: .value("Time", index), y: .value("Pressure", frame.pressure))
+                                    .foregroundStyle(by: .value("Series", "Pressure"))
                             }
                         }
                     }
-                    .chartForegroundStyleScale([
-                        "Pitch": SensorType.pitch.color,
-                        "Roll": SensorType.roll.color,
-                        "Acceleration": SensorType.accel.color,
-                        "Heading": SensorType.heading.color,
-                        "Pressure": SensorType.pressure.color
-                    ])
+                    .chartForegroundStyleScale(domain: SensorType.allCases.map { $0.rawValue },
+                                             range: SensorType.allCases.map { $0.color })
                     .chartLegend(.hidden)
                     .frame(height: 350)
                 } header: {
                     Text("Sensor Trends")
                 }
                 
-                //Interactive Legend
                 Section(header: Text("Toggle Variables to View")) {
-                    ForEach(SensorType.allCases) { type in
-                        Button {
-                            if selectedTypes.contains(type) {
-                                selectedTypes.remove(type)
-                            } else {
-                                selectedTypes.insert(type)
-                            }
-                        } label: {
-                            HStack {
-                                // Indicator Circle
-                                Image(systemName: selectedTypes.contains(type) ? "circle.fill" : "circle")
-                                    .foregroundColor(type.color)
-                                    .font(.system(size: 20))
-                                
-                                Text(type.rawValue)
-                                    .font(.body)
-                                    .foregroundColor(.primary)
-                                
-                                Spacer()
-                                
-                                // Show units and checkmark only if active
-                                if selectedTypes.contains(type) {
-                                    Text(unitLabel(for: type))
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    
-                                    Image(systemName: "checkmark")
-                                        .font(.caption.bold())
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                            .padding(.vertical, 8)
-                            .contentShape(Rectangle()) // Makes the empty Spacer areas clickable
-                        }
-                        .buttonStyle(.plain) // Prevents the whole row from turning blue/gray when tapped
-                    }
+                    
+                    sensorToggleGroup(title: "Motion & Attitude", types: [.pitch, .roll, .yaw, .accelX, .accelY, .accelZ])
+                    
+                    sensorToggleGroup(title: "GPS & Environment", types: [.speed, .heading, .pressure])
+                    
+                    sensorToggleGroup(title: "Gyroscope", types: [.gyroX, .gyroY, .gyroZ])
+                    
+                    sensorToggleGroup(title: "Magnetometer", types: [.magX, .magY, .magZ])
+                    
+                    sensorToggleGroup(title: "G-Force", types: [.gForceX, .gForceY, .gForceZ])
+                    
                 }
             }
         }
         .navigationTitle("Graph")
     }
     
-    // Helper to show units in the legend
     func unitLabel(for type: SensorType) -> String {
         switch type {
-        case .pitch, .roll, .heading: return "Degrees (°)"
-        case .accel: return "g-force"
+        case .pitch, .roll, .yaw, .heading: return "°"
+        case .accelX, .accelY, .accelZ: return "g"
+        case .gForceX, .gForceY, .gForceZ: return "G"
+        case .gyroX, .gyroY, .gyroZ: return "°/s"
+        case .magX, .magY, .magZ: return "µT"
+        case .speed: return "mph"
         case .pressure: return "kPa"
+        }
+    }
+    
+
+    @ViewBuilder
+    func sensorToggleGroup(title: String, types: [SensorType]) -> some View {
+        let selectedCount = types.filter { selectedTypes.contains($0) }.count
+        let allSelected = selectedCount == types.count
+        let isMixed = selectedCount > 0 && selectedCount < types.count
+        
+        Section {
+            DisclosureGroup {
+                ForEach(types) { type in
+                    Button {
+                        if selectedTypes.contains(type) {
+                            selectedTypes.remove(type)
+                        } else {
+                            selectedTypes.insert(type)
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: selectedTypes.contains(type) ? "circle.fill" : "circle")
+                                .foregroundColor(type.color)
+                                .font(.system(size: 16))
+                            
+                            Text(type.rawValue)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            if selectedTypes.contains(type) {
+                                Text(unitLabel(for: type))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Image(systemName: "checkmark")
+                                    .font(.caption.bold())
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.leading, 32)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(DefaultButtonStyle())
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    Button {
+                        if allSelected {
+                            types.forEach { selectedTypes.remove($0) }
+                        } else {
+                            types.forEach { selectedTypes.insert($0) }
+                        }
+                    } label: {
+                        Image(systemName: allSelected ? "checkmark.circle.fill" : (isMixed ? "minus.circle.fill" : "circle"))
+                            .foregroundColor(allSelected || isMixed ? .blue : .secondary)
+                            .font(.system(size: 22))
+                    }
+                    .buttonStyle(DefaultButtonStyle())
+                    
+                    Text(title)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                }
+                .padding(.vertical, 4)
+            }
         }
     }
 }

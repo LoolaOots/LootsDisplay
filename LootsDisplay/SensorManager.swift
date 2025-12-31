@@ -15,11 +15,30 @@ struct SensorFrame: Codable {
     let timestamp: Date
     let pitch: Double
     let roll: Double
-    let accelX: Double
+    let yaw: Double
+    
     let latitude: Double
     let longitude: Double
     let pressure: Double
     let heading: Double
+    let speed: Double
+    // User Acceleration
+    let accelX: Double
+    let accelY: Double
+    let accelZ: Double
+    // Total G-Force (Total Accel)
+    let gForceX: Double
+    let gForceY: Double
+    let gForceZ: Double
+    // Gyroscope (Rotation Rate)
+    let gyroX: Double
+    let gyroY: Double
+    let gyroZ: Double
+    // Magnetometer (Calibrated Magnetic Field)
+    let magX: Double
+    let magY: Double
+    let magZ: Double
+    //let magAccuracy: Int // 0: Uncalibrated, 1: Low, 2: Medium, 3: High
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -47,6 +66,17 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var pressure: Double = 0.0
     @Published var locationData: CLLocation?
     @Published var heading: Double = 0.0
+    @Published var speed: Double = 0.0
+    @Published var gForceX: Double = 0.0
+    @Published var gForceY: Double = 0.0
+    @Published var gForceZ: Double = 0.0
+    @Published var gyroX: Double = 0.0
+    @Published var gyroY: Double = 0.0
+    @Published var gyroZ: Double = 0.0
+    @Published var magX: Double = 0.0
+    @Published var magY: Double = 0.0
+    @Published var magZ: Double = 0.0
+    @Published var magAccuracy: Int = -1
     
     // Recording State
     @Published var isRecording = false
@@ -156,22 +186,53 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func startAllSensors() {
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 0.1
-            motionManager.startDeviceMotionUpdates(to: .main) { data, _ in
+            motionManager.startDeviceMotionUpdates(using: .xArbitraryZVertical, to: .main) { data, _ in
                 guard let motion = data else { return }
+                let toDegrees = 180.0 / .pi
+                
+                //Live view
                 self.acceleration = (motion.userAcceleration.x, motion.userAcceleration.y, motion.userAcceleration.z)
                 self.attitude = (motion.attitude.pitch, motion.attitude.roll, motion.attitude.yaw)
+                self.gyroX = motion.rotationRate.x * toDegrees
+                self.gyroY = motion.rotationRate.y * toDegrees
+                self.gyroZ = motion.rotationRate.z * toDegrees
+                self.magX = motion.magneticField.field.x
+                self.magY = motion.magneticField.field.y
+                self.magZ = motion.magneticField.field.z
+                self.magAccuracy = Int(motion.magneticField.accuracy.rawValue)
+                self.gForceX = motion.userAcceleration.x + motion.gravity.x
+                self.gForceY = motion.userAcceleration.y + motion.gravity.y
+                self.gForceZ = motion.userAcceleration.z + motion.gravity.z
+                self.speed = self.locationManager.location?.speed ?? 0.0
                 
-                // Capture data if recording is active
+                // Capture data
                 if self.isRecording {
+                    let totalX = motion.userAcceleration.x + motion.gravity.x
+                    let totalY = motion.userAcceleration.y + motion.gravity.y
+                    let totalZ = motion.userAcceleration.z + motion.gravity.z
+                    let currentSpeed = self.locationManager.location?.speed ?? 0.0
                     let frame = SensorFrame(
                         timestamp: Date(),
                         pitch: motion.attitude.pitch,
                         roll: motion.attitude.roll,
-                        accelX: motion.userAcceleration.x,
+                        yaw: motion.attitude.yaw,
                         latitude: self.locationData?.coordinate.latitude ?? 0,
                         longitude: self.locationData?.coordinate.longitude ?? 0,
                         pressure: self.pressure,
-                        heading: self.heading
+                        heading: self.heading,
+                        speed: currentSpeed > 0 ? currentSpeed : 0,
+                        accelX: motion.userAcceleration.x,
+                        accelY: motion.userAcceleration.y,
+                        accelZ: motion.userAcceleration.z,
+                        gForceX: totalX,
+                        gForceY: totalY,
+                        gForceZ: totalZ,
+                        gyroX: motion.rotationRate.x * toDegrees,
+                        gyroY: motion.rotationRate.y * toDegrees,
+                        gyroZ: motion.rotationRate.z * toDegrees,
+                        magX: motion.magneticField.field.x,
+                        magY: motion.magneticField.field.y,
+                        magZ: motion.magneticField.field.z
                     )
                     self.recordedData.append(frame)
                 }
@@ -190,40 +251,13 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
         self.locationData = locations.last
+        self.speed = max(0, location.speed)
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         self.heading = newHeading.magneticHeading
     }
-    
-//    func exportSession(_ session: RecordingSession) {
-//        guard let url = URL(string: "https://d338dd53d6ef.ngrok.app/400-route") else { return }
-//        
-//        var request = URLRequest(url: url)
-//        request.httpMethod = "POST"
-//        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//        
-//        do {
-//            let jsonData = try JSONEncoder().encode(session.frames)
-//            request.httpBody = jsonData
-//            URLSession.shared.dataTask(with: request) { data, response, error in
-//                let httpResponse = response as? HTTPURLResponse
-//                let statusCode = httpResponse?.statusCode ?? 0
-//                let newTitle = (statusCode == 200) ? "Export Successful" : "Export Failed"
-//                DispatchQueue.main.async {
-//                    self.showAlert = false
-//                    
-//                    self.alertTitle = newTitle
-//                    self.showAlert = true
-//                }
-//            }.resume()
-//        } catch {
-//            DispatchQueue.main.async {
-//                self.alertTitle = "Export Failed"
-//                self.showAlert = true
-//            }
-//        }
-//    }
 }
 
