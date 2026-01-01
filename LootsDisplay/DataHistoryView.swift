@@ -54,6 +54,11 @@ struct SessionRowView: View {
             
             Menu {
                 Button(action: {
+                        sensors.saveSessionAsCSV(session)
+                    }) {
+                        Label("Save", systemImage: "square.and.arrow.down")
+                    }
+                Button(action: {
                     NetworkManager.exportSession(session) { success, message in
                         DispatchQueue.main.async {
                             sensors.alertTitle = message
