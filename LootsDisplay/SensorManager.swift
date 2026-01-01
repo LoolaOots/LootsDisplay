@@ -263,15 +263,22 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func saveSessionAsCSV(_ session: RecordingSession) {
-        // 1. Create the Header Row
+        // 1. Create a clean timestamp for the filename (e.g., 2026-01-01_1315)
+        let fileDateFormatter = DateFormatter()
+        fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
+        let dateString = fileDateFormatter.string(from: session.startTime)
+        
+        let fileName = "SensorLog_\(dateString).csv"
+        
+        // 2. Create the Header Row
         var csvString = "Timestamp,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
         
-        // 2. Create the Data Rows
-        let formatter = ISO8601DateFormatter()
+        // 3. Create the Data Rows
+        let isoFormatter = ISO8601DateFormatter()
         
         for frame in session.frames {
             let row = [
-                formatter.string(from: frame.timestamp),
+                isoFormatter.string(from: frame.timestamp),
                 "\(frame.pitch)",
                 "\(frame.roll)",
                 "\(frame.yaw)",
@@ -297,22 +304,23 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             csvString.append(row + "\n")
         }
         
-        // 3. Save to a temporary file and show the Share Sheet
-        saveCSVToDisk(csvString: csvString, sessionID: session.id.uuidString.prefix(6).description)
+        // 4. Send to disk with the new filename
+        saveCSVToDisk(csvString: csvString, fileName: fileName)
     }
 
-    private func saveCSVToDisk(csvString: String, sessionID: String) {
-        let fileName = "SensorData_\(sessionID).csv"
+    private func saveCSVToDisk(csvString: String, fileName: String) {
         let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         
         do {
             try csvString.write(to: path, atomically: true, encoding: .utf8)
             
-            let activityVC = UIActivityViewController(activityItems: [path], applicationActivities: nil)
-            
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let rootVC = windowScene.windows.first?.rootViewController {
-                rootVC.present(activityVC, animated: true)
+            DispatchQueue.main.async {
+                let activityVC = UIActivityViewController(activityItems: [path], applicationActivities: nil)
+                
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootVC = windowScene.windows.first?.rootViewController {
+                    rootVC.present(activityVC, animated: true)
+                }
             }
         } catch {
             print("Failed to create CSV: \(error)")
