@@ -203,7 +203,9 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 self.gForceX = motion.userAcceleration.x + motion.gravity.x
                 self.gForceY = motion.userAcceleration.y + motion.gravity.y
                 self.gForceZ = motion.userAcceleration.z + motion.gravity.z
-                self.speed = self.locationManager.location?.speed ?? 0.0
+                //self.speed = self.locationManager.location?.speed ?? 0.0
+                let rawSpeed = self.locationManager.location?.speed ?? 0.0
+                self.speed = max(0.0, rawSpeed)
                 
                 // Capture data
                 if self.isRecording {

@@ -41,9 +41,9 @@ struct ContentView: View {
                         SensorRow(label: "Pitch", value: String(format: "%.2f°", sensors.attitude.pitch * 180 / .pi))
                         SensorRow(label: "Roll", value: String(format: "%.2f°", sensors.attitude.roll * 180 / .pi))
                         SensorRow(label: "Yaw", value: String(format: "%.2f°", sensors.attitude.yaw * 180 / .pi))
-                        SensorRow(label: "Accel X", value: String(format: "%.2f g", sensors.acceleration.x))
-                        SensorRow(label: "Accel Y", value: String(format: "%.2f g", sensors.acceleration.y))
-                        SensorRow(label: "Accel Z", value: String(format: "%.2f g", sensors.acceleration.z))
+                        SensorRow(label: "Accel X", value: String(format: "%.3f g", sensors.acceleration.x))
+                        SensorRow(label: "Accel Y", value: String(format: "%.3f g", sensors.acceleration.y))
+                        SensorRow(label: "Accel Z", value: String(format: "%.3f g", sensors.acceleration.z))
                     }
 
                     Section(header: Text("GPS & Environment")) {
