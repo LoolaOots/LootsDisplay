@@ -307,6 +307,57 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         // 4. Send to disk with the new filename
         saveCSVToDisk(csvString: csvString, fileName: fileName)
     }
+    
+    func saveSessionsAsCSV(_ selectedSessions: [RecordingSession]) {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("BulkExport_\(UUID().uuidString.prefix(6))")
+        
+        do {
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+            
+            for session in selectedSessions {
+                let csvData = generateCSVString(for: session)
+                let fileDateFormatter = DateFormatter()
+                fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
+                let dateString = fileDateFormatter.string(from: session.startTime)
+                
+                let fileName = "SensorLog_\(dateString).csv"
+                
+                let fileURL = tempDir.appendingPathComponent(fileName)
+                try csvData.write(to: fileURL, atomically: true, encoding: .utf8)
+            }
+            
+            // Present the folder to the user
+            DispatchQueue.main.async {
+                let activityVC = UIActivityViewController(activityItems: [tempDir], applicationActivities: nil)
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootVC = windowScene.windows.first?.rootViewController {
+                    rootVC.present(activityVC, animated: true)
+                }
+            }
+        } catch {
+            print("Bulk save failed: \(error)")
+        }
+    }
+    
+    private func generateCSVString(for session: RecordingSession) -> String {
+        var csvString = "Timestamp,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
+        let isoFormatter = ISO8601DateFormatter()
+        
+        for frame in session.frames {
+            let row = [
+                isoFormatter.string(from: frame.timestamp),
+                "\(frame.pitch)", "\(frame.roll)", "\(frame.yaw)",
+                "\(frame.latitude)", "\(frame.longitude)", "\(frame.pressure)",
+                "\(frame.heading)", "\(frame.speed)",
+                "\(frame.accelX)", "\(frame.accelY)", "\(frame.accelZ)",
+                "\(frame.gForceX)", "\(frame.gForceY)", "\(frame.gForceZ)",
+                "\(frame.gyroX)", "\(frame.gyroY)", "\(frame.gyroZ)",
+                "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)"
+            ].joined(separator: ",")
+            csvString.append(row + "\n")
+        }
+        return csvString
+    }
 
     private func saveCSVToDisk(csvString: String, fileName: String) {
         let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)

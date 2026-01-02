@@ -4,7 +4,7 @@ struct ContentView: View {
     @StateObject var sensors = SensorManager()
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 NavigationLink(
                         destination: DataHistoryView(sensors: sensors),
