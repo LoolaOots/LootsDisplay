@@ -77,6 +77,18 @@ struct ContentView: View {
                         SensorRow(label: "G-Force Y", value: String(format: "%.2f g", sensors.gForceY))
                         SensorRow(label: "G-Force Z", value: String(format: "%.2f g", sensors.gForceZ))
                     }
+                    
+                    Section {
+                        NavigationLink(destination: ExperimentalFeaturesView()) {
+                            HStack {
+                                Text("Experimental Features")
+                                    .foregroundColor(.blue) // Optional: Makes it look more like a button
+                                Spacer()
+                                Image(systemName: "flask")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
                 }
                 
                 VStack(spacing: 12) {

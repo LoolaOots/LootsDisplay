@@ -400,6 +400,7 @@
 				DEVELOPMENT_TEAM = 3N7CT94HF7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app needs Bluetooth access to scan for experimental sensor devices.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs location to display GPS data.\"";
 				INFOPLIST_KEY_NSMotionUsageDescription = "\"This app needs motion data to show your movement.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -430,6 +431,7 @@
 				DEVELOPMENT_TEAM = 3N7CT94HF7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app needs Bluetooth access to scan for experimental sensor devices.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs location to display GPS data.\"";
 				INFOPLIST_KEY_NSMotionUsageDescription = "\"This app needs motion data to show your movement.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
