@@ -235,6 +235,11 @@ struct SessionRowView: View {
             }
         }
         .padding(.vertical, 4)
+        // Ensure that tapping the row goes to the graph ONLY when not selecting
+        .background(
+            NavigationLink("", destination: SensorGraphView(session: session))
+                .opacity(0)
+        )
     }
 
     // Extracted the tag UI for better readability
