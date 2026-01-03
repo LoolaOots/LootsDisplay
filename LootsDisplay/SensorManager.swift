@@ -13,6 +13,8 @@ import UIKit
 
 struct SensorFrame: Codable {
     let timestamp: Date
+    let label: String?
+    
     let pitch: Double
     let roll: Double
     let yaw: Double
@@ -44,7 +46,7 @@ struct SensorFrame: Codable {
 struct RecordingSession: Identifiable, Codable {
     var id = UUID()
     let startTime: Date
-    let frames: [SensorFrame]
+    var frames: [SensorFrame]
     
     var title: String {
         let formatter = DateFormatter()
@@ -215,6 +217,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     let currentSpeed = self.locationManager.location?.speed ?? 0.0
                     let frame = SensorFrame(
                         timestamp: Date(),
+                        label: nil,
                         pitch: motion.attitude.pitch,
                         roll: motion.attitude.roll,
                         yaw: motion.attitude.yaw,
@@ -262,16 +265,20 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         self.heading = newHeading.magneticHeading
     }
     
+    //For single session
     func saveSessionAsCSV(_ session: RecordingSession) {
         // 1. Create a clean timestamp for the filename (e.g., 2026-01-01_1315)
         let fileDateFormatter = DateFormatter()
-        fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
+        fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
         let dateString = fileDateFormatter.string(from: session.startTime)
         
-        let fileName = "SensorLog_\(dateString).csv"
+        let firstLabel = session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
+        let cleanLabel = firstLabel?.replacingOccurrences(of: " ", with: "_") ?? "SensorLog"
+        
+        let fileName = "\(cleanLabel)_\(dateString).csv"
         
         // 2. Create the Header Row
-        var csvString = "Timestamp,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
+        var csvString = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
         
         // 3. Create the Data Rows
         let isoFormatter = ISO8601DateFormatter()
@@ -279,6 +286,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         for frame in session.frames {
             let row = [
                 isoFormatter.string(from: frame.timestamp),
+                "\(frame.label ?? "")",
                 "\(frame.pitch)",
                 "\(frame.roll)",
                 "\(frame.yaw)",
@@ -316,11 +324,16 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             
             for session in selectedSessions {
                 let csvData = generateCSVString(for: session)
+                
+                let firstLabel = session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
+                let cleanLabel = firstLabel?.replacingOccurrences(of: " ", with: "_") ?? "SensorLog"
+                let uniqueID = session.id.uuidString.prefix(4)
+                
                 let fileDateFormatter = DateFormatter()
-                fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
+                fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
                 let dateString = fileDateFormatter.string(from: session.startTime)
                 
-                let fileName = "SensorLog_\(dateString).csv"
+                let fileName = "\(cleanLabel)_\(dateString)_\(uniqueID).csv"
                 
                 let fileURL = tempDir.appendingPathComponent(fileName)
                 try csvData.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -340,12 +353,13 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func generateCSVString(for session: RecordingSession) -> String {
-        var csvString = "Timestamp,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
+        var csvString = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
         let isoFormatter = ISO8601DateFormatter()
         
         for frame in session.frames {
             let row = [
                 isoFormatter.string(from: frame.timestamp),
+                "\(frame.label ?? "")",
                 "\(frame.pitch)", "\(frame.roll)", "\(frame.yaw)",
                 "\(frame.latitude)", "\(frame.longitude)", "\(frame.pressure)",
                 "\(frame.heading)", "\(frame.speed)",
@@ -375,6 +389,37 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         } catch {
             print("Failed to create CSV: \(error)")
+        }
+    }
+    
+    func applyLabelToSession(id: UUID, label: String) {
+        if let index = sessions.firstIndex(where: { $0.id == id }) {
+            let updatedFrames = sessions[index].frames.map { frame in
+                SensorFrame(
+                    timestamp: frame.timestamp,
+                    label: label, // Apply the new label
+                    pitch: frame.pitch, roll: frame.roll, yaw: frame.yaw,
+                    latitude: frame.latitude, longitude: frame.longitude,
+                    pressure: frame.pressure, heading: frame.heading, speed: frame.speed,
+                    accelX: frame.accelX, accelY: frame.accelY, accelZ: frame.accelZ,
+                    gForceX: frame.gForceX, gForceY: frame.gForceY, gForceZ: frame.gForceZ,
+                    gyroX: frame.gyroX, gyroY: frame.gyroY, gyroZ: frame.gyroZ,
+                    magX: frame.magX, magY: frame.magY, magZ: frame.magZ
+                )
+            }
+            
+            // Create a mutable copy of the session
+            var updatedSession = sessions[index]
+            updatedSession.frames = updatedFrames
+            
+            // Update the array to trigger UI refresh (@Published)
+            DispatchQueue.main.async {
+                self.sessions[index] = updatedSession
+                
+                // Persist to disk
+                LocalFileManager.saveSession(updatedSession)
+                print("Successfully saved label '\(label)' to session \(id)")
+            }
         }
     }
 }
