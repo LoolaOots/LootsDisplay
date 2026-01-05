@@ -132,11 +132,11 @@ struct DataHistoryView: View {
 
         // If only one is selected, just use the normal save
         if selectedSessions.count == 1 {
-            sensors.saveSessionAsCSV(selectedSessions[0])
+            CSVManager.exportSingleSessionAsCSV(selectedSessions[0])
             return
         }
 
-        sensors.saveSessionsAsCSV(selectedSessions)
+        CSVManager.exportSessionsAsCSV(selectedSessions)
     }
 
     private func bulkExportJSON() {
@@ -262,9 +262,9 @@ struct SessionRowView: View {
     private var rowActionMenu: some View {
         Menu {
             Button {
-                sensors.saveSessionAsCSV(session)
+                CSVManager.exportSingleSessionAsCSV(session)
             } label: {
-                Label("Save CSV", systemImage: "square.and.arrow.down")
+                Label("Save", systemImage: "square.and.arrow.down")
             }
             
             Button {
