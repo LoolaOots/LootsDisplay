@@ -60,6 +60,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let motionManager = CMMotionManager()
     private let altimeter = CMAltimeter()
     private let locationManager = CLLocationManager()
+    private let limitKey = "user_recording_limit"
     
     // UI State
     @Published var acceleration = (x: 0.0, y: 0.0, z: 0.0)
@@ -84,6 +85,12 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var isRecording = false
     @Published var recordedData: [SensorFrame] = []
     @Published var secondsElapsed = 0 // Track the recording duration
+    //Persistent data via UserDefaults
+    @Published var recordingLimit: Int {
+        didSet {
+            UserDefaults.standard.set(recordingLimit, forKey: limitKey) //get user set recording duration or use default
+        }
+    }
     
     //Recording
     @Published var sessions: [RecordingSession] = []
@@ -96,6 +103,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private var secondsTimer: Timer? // Timer for the UI counter
     
     override init() {
+        let savedLimit = UserDefaults.standard.integer(forKey: limitKey)
+        self.recordingLimit = savedLimit > 0 ? savedLimit : 45
         super.init()
         LocalFileManager.setupFolder()
         self.sessions = LocalFileManager.loadSessions()
@@ -124,19 +133,18 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         secondsElapsed = 0
         isRecording = true
             
-        // Timer for the 45-second limit
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 45.0, repeats: false) { _ in
+        //dynamic limit set by the slider
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: Double(recordingLimit), repeats: false) { _ in
             self.stopRecording()
         }
             
-        // Timer to update the UI counter every second
         secondsTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if self.secondsElapsed < 45 {
+            if self.secondsElapsed < self.recordingLimit {
                 self.secondsElapsed += 1
             }
         }
     }
-
+    
     private func stopRecording() {
         isRecording = false
         recordingTimer?.invalidate()

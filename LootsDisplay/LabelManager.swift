@@ -28,10 +28,10 @@ class LabelManager: ObservableObject {
         var currentHistory = recentLabels.filter { $0.lowercased() != trimmed.lowercased() }
         currentHistory.insert(trimmed, at: 0)
         
-        // Keep only the last 3
-        let updatedHistory = Array(currentHistory.prefix(maxHistory))
+         let updatedHistory = Array(currentHistory.prefix(maxHistory))
         
         // Save and Update UI
+        //Persistent data via UserDefaults
         UserDefaults.standard.set(updatedHistory, forKey: historyKey)
         DispatchQueue.main.async {
             self.recentLabels = updatedHistory

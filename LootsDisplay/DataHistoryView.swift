@@ -222,10 +222,10 @@ struct SessionRowView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                // Main Header Row: Date Title + Label Tag
+                // Date Title + Label Tag
                 HStack(alignment: .center, spacing: 8) {
                     Text(session.title)
-                        .font(.system(.headline)) // Monospaced keeps dates aligned
+                        .font(.system(.headline))
                         .lineLimit(1)
                     
                     if let label = sessionLabel {
@@ -241,7 +241,7 @@ struct SessionRowView: View {
             
             Spacer()
             
-            // Interaction logic (Menu and Chevron)
+            // Interaction logic
             if editMode?.wrappedValue == .inactive {
                 rowActionMenu
                 
@@ -258,7 +258,7 @@ struct SessionRowView: View {
         )
     }
 
-    // Extracted the tag UI for better readability
+    // tag UI
     @ViewBuilder
     private func labelTag(_ text: String) -> some View {
         HStack(spacing: 3) {
@@ -274,7 +274,7 @@ struct SessionRowView: View {
         .fixedSize() // Prevents the tag from squishing
     }
     
-    // Extracted Menu
+    //... menu
     private var rowActionMenu: some View {
         Menu {
             Button {

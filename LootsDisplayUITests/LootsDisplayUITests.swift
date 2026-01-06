@@ -11,7 +11,7 @@ final class LootsDisplayUITests: XCTestCase {
 
     func testInitialState_IsReadyToRecord() throws {
         // Verify the recording status header exists
-        let statusText = app.staticTexts["Ready to Record (Max 45s)"]
+        let statusText = app.staticTexts["Ready"]
         XCTAssertTrue(statusText.exists, "The initial status should be 'Ready to Record'")
         
         // Verify the Start Button exists
@@ -29,7 +29,7 @@ final class LootsDisplayUITests: XCTestCase {
         
         // Check if the recording timer text appears
         // This looks for any static text where the label STARTS WITH "Recording Active:"
-        let predicate = NSPredicate(format: "label BEGINSWITH 'Recording Active:'")
+        let predicate = NSPredicate(format: "label BEGINSWITH 'Active:'")
         let activeStatus = app.staticTexts.element(matching: predicate)
 
         XCTAssertTrue(activeStatus.waitForExistence(timeout: 2), "The recording timer should appear.")
