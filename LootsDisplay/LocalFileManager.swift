@@ -37,6 +37,7 @@ struct LocalFileManager {
         }
     }
     
+    //Persistent data via JSON
     static func loadSessions() -> [RecordingSession] {
         guard let url = getFolderURL() else { return [] }
         do {

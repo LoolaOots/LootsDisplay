@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var sensors = SensorManager()
+    @State private var isDurationExpanded = false
 
     var body: some View {
         NavigationStack {
@@ -12,28 +13,67 @@ struct ContentView: View {
                 ) { EmptyView() }
                 
                 List {
-                    Section(header: Text("Recording Status")) {
+                    Section(header: Text("Recording Controls")) {
+                        // Recording Status
                         HStack {
                             Circle()
                                 .fill(sensors.isRecording ? Color.red : Color.gray)
                                 .frame(width: 10, height: 10)
                             
-                            // Dynamic text showing the time recorded
                             if sensors.isRecording {
-                                Text("Recording Active: \(sensors.secondsElapsed)s / 45s")
+                                Text("Active: \(sensors.secondsElapsed)s / \(sensors.recordingLimit)s")
                                     .bold()
                                     .foregroundColor(.red)
                             } else {
-                                Text("Ready to Record (Max 45s)")
+                                Text("Ready")
+                                    .foregroundColor(.secondary)
                             }
-                            
                             Spacer()
-                            
                             if !sensors.isRecording && !sensors.recordedData.isEmpty {
                                 Text("\(sensors.recordedData.count) frames")
                                     .font(.caption)
                                     .foregroundColor(.blue)
                             }
+                        }
+
+                        // Expandable Duration slider
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                isDurationExpanded.toggle()
+                            }
+                        }) {
+                            HStack {
+                                Label("Limit", systemImage: "timer")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Text("\(sensors.recordingLimit)s")
+                                    //.foregroundColor(.blue)
+                                    .bold()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.secondary)
+                                    .rotationEffect(.degrees(isDurationExpanded ? 90 : 0))
+                            }
+                        }
+                        .disabled(sensors.isRecording)
+
+                        // Recording duration slider (Hidden when collapsed)
+                        if isDurationExpanded && !sensors.isRecording {
+                            VStack(spacing: 15) {
+                                Slider(value: Binding(
+                                    get: { Double(sensors.recordingLimit) },
+                                    set: { sensors.recordingLimit = Int($0) }
+                                ), in: 1...60, step: 1.0)
+                                .accentColor(.blue)
+                                .scaleEffect(0.95)
+                                
+                                Text("\(sensors.recordingLimit) Seconds")
+                                    .font(.headline)
+                                    .bold()
+                                    .foregroundColor(.blue)
+                            }
+                            .padding(.vertical, 8)
+                            .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
                         }
                     }
                     
