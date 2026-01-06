@@ -84,14 +84,11 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var isRecording = false
     @Published var recordedData: [SensorFrame] = []
     @Published var secondsElapsed = 0 // Track the recording duration
-        
+    
+    //Recording
     @Published var sessions: [RecordingSession] = []
     
     @Published var showLimitAlert = false // For the "Max Reached" popup
-    @Published var showAlert = false
-    @Published var alertTitle = ""
-    @Published var alertMessage = ""
-    
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
     
     
@@ -281,13 +278,11 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             var updatedSession = sessions[index]
             updatedSession.frames = updatedFrames
             
-            // Update the array to trigger UI refresh (@Published)
+            LabelManager.shared.saveLabelToHistory(label)
+                    
             DispatchQueue.main.async {
                 self.sessions[index] = updatedSession
-                
-                // Persist to disk
                 LocalFileManager.saveSession(updatedSession)
-                print("Successfully saved label '\(label)' to session \(id)")
             }
         }
     }

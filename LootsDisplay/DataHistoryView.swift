@@ -13,6 +13,7 @@ struct DataHistoryView: View {
     @State private var sessionsToLabel: [RecordingSession] = []
     private let maxLabelLength = 15
     private let illegalCharacters = CharacterSet(charactersIn: "/\\?%*|\"<>:")
+    @StateObject private var labelManager = LabelManager.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -27,12 +28,15 @@ struct DataHistoryView: View {
         .toolbar(editMode == .active ? .visible : .hidden, for: .bottomBar)
         .toolbarBackground(.visible, for: .bottomBar)
         .toolbarBackground(Color(UIColor.systemBackground), for: .bottomBar)
-        // Extracted Alerts
-        .alert(sensors.alertTitle, isPresented: $sensors.showAlert) {
-            Button("OK", role: .cancel) { sensors.showAlert = false }
-        }
-        .alert("Add Label", isPresented: $showingLabelAlert) {
-            labelAlertContent
+        .sheet(isPresented: $showingLabelAlert, onDismiss: {
+            tempLabelText = ""
+            sessionsToLabel = []
+        }) {
+            LabelEntrySheet(
+                sensors: sensors,
+                tempLabelText: $tempLabelText,
+                sessionsToLabel: sessionsToLabel
+            )
         }
         .onChange(of: tempLabelText) { newValue in
             // Strip illegal characters
@@ -56,7 +60,6 @@ struct DataHistoryView: View {
                     Text("No sessions found").foregroundColor(.secondary)
                 } else {
                     ForEach(sensors.sessions) { session in
-                        // Make sure you updated SessionRowView to accept these bindings!
                         SessionRowView(
                             session: session,
                             sensors: sensors,
@@ -73,7 +76,30 @@ struct DataHistoryView: View {
 
     @ViewBuilder
     private var labelAlertContent: some View {
-        TextField("e.g., Bench Press Set 1", text: $tempLabelText)
+        VStack(alignment: .leading, spacing: 10) {
+            TextField("e.g., Bench Press Set 1", text: $tempLabelText)
+                .textFieldStyle(.roundedBorder)
+
+            if !labelManager.recentLabels.isEmpty {
+                Text("Recent Labels")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                ForEach(labelManager.recentLabels, id: \.self) { label in
+                    Button(action: {
+                        tempLabelText = label
+                    }) {
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                            Text(label)
+                            Spacer()
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+        }
+        
         Button("Apply") {
             for session in sessionsToLabel {
                 sensors.applyLabelToSession(id: session.id, label: tempLabelText)
@@ -137,16 +163,6 @@ struct DataHistoryView: View {
         }
 
         CSVManager.exportSessionsAsCSV(selectedSessions)
-    }
-
-    private func bulkExportJSON() {
-        if let firstID = selectedSessionIDs.first,
-           let session = sensors.sessions.first(where: { $0.id == firstID }) {
-            NetworkManager.exportSession(session) { _, msg in
-                sensors.alertTitle = msg
-                sensors.showAlert = true
-            }
-        }
     }
     
     @ViewBuilder
