@@ -154,12 +154,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         recordingTimer = nil
         secondsTimer = nil
-        saveDataToDisk() //DELETE OR CHANGE LATER
-    }
-
-    private func saveDataToDisk() {
         print("Stopped! Captured \(recordedData.count) samples.")
-        // Here you could convert recordedData to a JSON or CSV file
     }
     
     func deleteSession(at offsets: IndexSet) {

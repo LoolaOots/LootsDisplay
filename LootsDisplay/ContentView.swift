@@ -148,7 +148,8 @@ struct SensorRow: View {
         HStack {
             Text(label).foregroundColor(.secondary)
             Spacer()
-            Text(value).bold().monospacedDigit()
+            Text(value).bold().monospacedDigit().accessibilityIdentifier("\(label)_Value")
+            
         }
     }
 }
