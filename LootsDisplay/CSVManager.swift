@@ -21,16 +21,7 @@ struct CSVManager {
             for session in selectedSessions {
                 let csvString = generateCSVString(for: session)
                 
-                // Naming Logic
-                let firstLabel = session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
-                let cleanLabel = firstLabel?.replacingOccurrences(of: " ", with: "_") ?? "SensorLog"
-                let uniqueID = session.id.uuidString.prefix(4)
-                
-                let fileDateFormatter = DateFormatter()
-                fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
-                let dateString = fileDateFormatter.string(from: session.startTime)
-                
-                let fileName = "\(cleanLabel)_\(dateString)_\(uniqueID).csv"
+                let fileName = fileName(for: session)
                 let fileURL = tempDir.appendingPathComponent(fileName)
                 
                 try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -47,10 +38,7 @@ struct CSVManager {
     static func exportSingleSessionAsCSV(_ session: RecordingSession) {
         let csvString = generateCSVString(for: session)
         
-        let firstLabel = session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
-        let cleanLabel = firstLabel?.replacingOccurrences(of: " ", with: "_") ?? "SensorLog"
-        
-        let fileName = "\(cleanLabel)_\(UUID().uuidString.prefix(4)).csv"
+        let fileName = fileName(for: session)
         let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         
         do {
@@ -60,6 +48,20 @@ struct CSVManager {
             print("Failed to create CSV: \(error)")
         }
     }
+    
+    static func fileName(for session: RecordingSession) -> String {
+            let firstLabel = session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
+            let cleanLabel = firstLabel?.replacingOccurrences(of: " ", with: "_") ?? "SensorLog"
+            
+            let fileDateFormatter = DateFormatter()
+            fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
+            let dateString = fileDateFormatter.string(from: session.startTime)
+            
+            //Unique ID
+            let uniqueID = session.id.uuidString.prefix(4)
+            
+            return "\(cleanLabel)_\(dateString)_\(uniqueID).csv"
+        }
 
     /// Converts a RecordingSession into a raw CSV String
     static func generateCSVString(for session: RecordingSession) -> String {

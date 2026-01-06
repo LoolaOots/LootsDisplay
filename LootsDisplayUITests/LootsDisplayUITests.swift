@@ -1,41 +1,41 @@
-//
-//  LootsDisplayUITests.swift
-//  LootsDisplayUITests
-//
-//  Created by Nat on 12/28/25.
-//
-
 import XCTest
 
 final class LootsDisplayUITests: XCTestCase {
 
+    let app = XCUIApplication()
+
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
         app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
 
-    @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
-        }
+    func testInitialState_IsReadyToRecord() throws {
+        // Verify the recording status header exists
+        let statusText = app.staticTexts["Ready to Record (Max 45s)"]
+        XCTAssertTrue(statusText.exists, "The initial status should be 'Ready to Record'")
+        
+        // Verify the Start Button exists
+        let startButton = app.buttons["START RECORDING"]
+        XCTAssertTrue(startButton.exists)
+    }
+
+    func testRecordingToggle_ChangesButtonText() throws {
+        let startButton = app.buttons["START RECORDING"]
+        startButton.tap()
+        
+        // Check if the button changes to "STOP"
+        let stopButton = app.buttons["STOP RECORDING"]
+        XCTAssertTrue(stopButton.waitForExistence(timeout: 2), "Button should change to STOP after tapping")
+        
+        // Check if the recording timer text appears
+        // This looks for any static text where the label STARTS WITH "Recording Active:"
+        let predicate = NSPredicate(format: "label BEGINSWITH 'Recording Active:'")
+        let activeStatus = app.staticTexts.element(matching: predicate)
+
+        XCTAssertTrue(activeStatus.waitForExistence(timeout: 2), "The recording timer should appear.")
+        XCTAssertTrue(activeStatus.exists)
+        
+        stopButton.tap()
+        XCTAssertTrue(app.buttons["START RECORDING"].exists)
     }
 }
