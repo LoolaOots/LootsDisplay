@@ -95,9 +95,10 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     //Recording
     @Published var sessions: [RecordingSession] = []
     
+    //Maximum recordings
     @Published var showLimitAlert = false // For the "Max Reached" popup
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
-    
+    private var recordedHistoryLimit = 10
     
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? // Timer for the UI counter
@@ -119,7 +120,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             stopRecording()
         } else {
             DispatchQueue.main.async {
-                if self.sessions.count >= 3 {
+                if self.sessions.count >= self.recordedHistoryLimit {
                     self.showLimitAlert = true
                 } else {
                     self.startRecording()

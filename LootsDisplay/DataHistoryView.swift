@@ -174,6 +174,7 @@ struct DataHistoryView: View {
             Image(systemName: "trash")
                 .font(.title3) // Makes the icon larger
         }
+        .tint(.red)
         .disabled(selectedSessionIDs.isEmpty)
 
         Spacer()
@@ -288,6 +289,14 @@ struct SessionRowView: View {
                 showingLabelAlert = true
             } label: {
                 Label("Label", systemImage: "tag")
+            }
+            
+            Button(role: .destructive) {
+                if let index = sensors.sessions.firstIndex(where: { $0.id == session.id }) {
+                    sensors.deleteSession(at: IndexSet(integer: index))
+                }
+            } label: {
+                Label("Delete", systemImage: "trash")
             }
         } label: {
             Image(systemName: "ellipsis.circle")

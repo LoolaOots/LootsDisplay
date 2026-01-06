@@ -39,7 +39,7 @@ final class SensorManagerTests: XCTestCase {
         // Arrange: Directly set 3 sessions
         let mockFrame = createEmptyFrame()
         let session = RecordingSession(startTime: Date(), frames: [mockFrame])
-        sensorManager.sessions = [session, session, session]
+        sensorManager.sessions = [session, session, session, session, session, session, session, session, session, session]
         
         // Act
         sensorManager.toggleRecording()
