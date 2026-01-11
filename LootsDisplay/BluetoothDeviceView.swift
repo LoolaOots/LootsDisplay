@@ -30,7 +30,6 @@ struct BluetoothDeviceView: View {
                                 VStack(alignment: .leading) {
                                     Text(device.name ?? "Unknown Device")
                                         .font(.headline)
-                                        // Standardize text color for buttons
                                         .foregroundColor(.primary)
                                     
                                     Text(device.identifier.uuidString)

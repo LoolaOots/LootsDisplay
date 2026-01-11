@@ -65,23 +65,39 @@ struct CSVManager {
 
     /// Converts a RecordingSession into a raw CSV String
     static func generateCSVString(for session: RecordingSession) -> String {
-        var csvString = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
-        let isoFormatter = ISO8601DateFormatter()
+        //Is Sensor Connected
+        let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
+        var header = "Timestamp,Label,Pitch,Roll,Yaw,Lat,Lon,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ"
         
+        if sensorConnected {
+            header += ",WIT_AccX,WIT_AccY,WIT_AccZ,WIT_Roll,WIT_Pitch,WIT_Yaw"
+        }
+        
+        var csvString = header + "\n"
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+
         for frame in session.frames {
-            let row = [
-                isoFormatter.string(from: frame.timestamp),
-                "\(frame.label ?? "")",
-                "\(frame.pitch)", "\(frame.roll)", "\(frame.yaw)",
-                "\(frame.latitude)", "\(frame.longitude)", "\(frame.pressure)",
-                "\(frame.heading)", "\(frame.speed)",
-                "\(frame.accelX)", "\(frame.accelY)", "\(frame.accelZ)",
-                "\(frame.gForceX)", "\(frame.gForceY)", "\(frame.gForceZ)",
-                "\(frame.gyroX)", "\(frame.gyroY)", "\(frame.gyroZ)",
-                "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)"
-            ].joined(separator: ",")
+            let timestamp = formatter.string(from: frame.timestamp)
+            let label = frame.label ?? ""
+
+            var row = "\(timestamp),\(label),\(frame.pitch),\(frame.roll),\(frame.yaw),\(frame.latitude),\(frame.longitude),\(frame.speed),\(frame.accelX),\(frame.accelY),\(frame.accelZ),\(frame.gForceX),\(frame.gForceY),\(frame.gForceZ)"
+            
+            if sensorConnected {
+                let wAx = String(format: "%.4f", frame.witAccX ?? 0.0)
+                let wAy = String(format: "%.4f", frame.witAccY ?? 0.0)
+                let wAz = String(format: "%.4f", frame.witAccZ ?? 0.0)
+                let wR = String(format: "%.2f", frame.witRoll ?? 0.0)
+                let wP = String(format: "%.2f", frame.witPitch ?? 0.0)
+                let wY = String(format: "%.2f", frame.witYaw ?? 0.0)
+                
+                row += ",\(wAx),\(wAy),\(wAz),\(wR),\(wP),\(wY)"
+            }
+            
             csvString.append(row + "\n")
         }
+        
         return csvString
     }
     

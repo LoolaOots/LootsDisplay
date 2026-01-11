@@ -9,12 +9,16 @@ enum SensorType: String, CaseIterable, Identifiable {
     case magX = "Mag X", magY = "Mag Y", magZ = "Mag Z"
     case speed = "Speed", pressure = "Pressure"
     
+    //Sensor Data
+    case witAccX = "WIT Accel X", witAccY = "WIT Accel Y", witAccZ = "WIT Accel Z"
+    case witRoll = "WIT Roll", witPitch = "WIT Pitch", witYaw = "WIT Yaw"
+    
     var id: String { self.rawValue }
     
     var color: Color {
         switch self {
         //Motion & Attitude (Primary Blues/Purples)
-        case .pitch: return .blue
+        case .pitch: return .yellow
         case .roll: return .purple
         case .yaw: return .cyan
         
@@ -25,7 +29,7 @@ enum SensorType: String, CaseIterable, Identifiable {
         
         //GPS & Environment (Earth Tones)
         case .speed: return .orange
-        case .heading: return .yellow
+        case .heading: return Color(red: 0.6, green: 0.5, blue: 0.0)
         case .pressure: return .gray
         
         //Gyroscope (Muted RGB / Neon)
@@ -42,6 +46,14 @@ enum SensorType: String, CaseIterable, Identifiable {
         case .gForceX: return .indigo
         case .gForceY: return .brown
         case .gForceZ: return .black
+            
+        //Sensor Data
+        case .witAccX: return Color.red.opacity(0.5)
+        case .witAccY: return Color.green.opacity(0.5)
+        case .witAccZ: return Color.blue.opacity(0.5)
+        case .witRoll: return Color.purple.opacity(0.5)
+        case .witPitch: return Color.yellow.opacity(0.5)
+        case .witYaw: return Color.cyan.opacity(0.5)
         }
     }
 }
@@ -165,6 +177,32 @@ struct SensorGraphView: View {
                                 LineMark(x: .value("Time", index), y: .value("Pressure", frame.pressure))
                                     .foregroundStyle(by: .value("Series", "Pressure"))
                             }
+                            
+                            //Sensor
+                            if selectedTypes.contains(.witAccX), let val = frame.witAccX {
+                                LineMark(x: .value("Time", index), y: .value("WIT Accel X", val))
+                                    .foregroundStyle(by: .value("Series", "WIT Accel X"))
+                            }
+                            if selectedTypes.contains(.witAccY), let val = frame.witAccY {
+                                LineMark(x: .value("Time", index), y: .value("WIT Accel Y", val))
+                                    .foregroundStyle(by: .value("Series", "WIT Accel Y"))
+                            }
+                            if selectedTypes.contains(.witAccZ), let val = frame.witAccZ {
+                                LineMark(x: .value("Time", index), y: .value("WIT Accel Z", val))
+                                    .foregroundStyle(by: .value("Series", "WIT Accel Z"))
+                            }
+                            if selectedTypes.contains(.witRoll), let val = frame.witRoll {
+                                LineMark(x: .value("Time", index), y: .value("WIT Roll", val))
+                                    .foregroundStyle(by: .value("Series", "WIT Roll"))
+                            }
+                            if selectedTypes.contains(.witPitch), let val = frame.witPitch {
+                                LineMark(x: .value("Time", index), y: .value("WIT Pitch", val))
+                                    .foregroundStyle(by: .value("Series", "WIT Pitch"))
+                            }
+                            if selectedTypes.contains(.witYaw), let val = frame.witYaw {
+                                LineMark(x: .value("Time", index), y: .value("WIT Yaw", val))
+                                    .foregroundStyle(by: .value("Series", "WIT Yaw"))
+                            }
                         }
                     }
                     .chartForegroundStyleScale(domain: SensorType.allCases.map { $0.rawValue },
@@ -187,6 +225,13 @@ struct SensorGraphView: View {
                     
                     sensorToggleGroup(title: "G-Force", types: [.gForceX, .gForceY, .gForceZ])
                     
+                    //Sensor Data
+                    let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
+                    if sensorConnected {
+                        sensorToggleGroup(title: "External Sensor",
+                                          types: [.witAccX, .witAccY, .witAccZ, .witRoll, .witPitch, .witYaw])
+                    }
+                    
                 }
             }
         }
@@ -202,6 +247,9 @@ struct SensorGraphView: View {
         case .magX, .magY, .magZ: return "µT"
         case .speed: return "mph"
         case .pressure: return "kPa"
+        case .witAccX, .witAccY, .witAccZ: return "g"
+        case .witRoll, .witPitch, .witYaw: return "°"
+        default: return ""
         }
     }
     

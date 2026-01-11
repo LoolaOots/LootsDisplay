@@ -13,7 +13,7 @@ import UIKit
 
 struct SensorFrame: Codable {
     let timestamp: Date
-    let label: String?
+    var label: String?
     
     let pitch: Double
     let roll: Double
@@ -40,7 +40,18 @@ struct SensorFrame: Codable {
     let magX: Double
     let magY: Double
     let magZ: Double
-    //let magAccuracy: Int // 0: Uncalibrated, 1: Low, 2: Medium, 3: High
+    
+    // WIT Motion Sensor Data
+    let witAccX: Double?
+    let witAccY: Double?
+    let witAccZ: Double?
+    let witRoll: Double?
+    let witPitch: Double?
+    let witYaw: Double?
+    
+    mutating func updateLabel(_ newLabel: String) {
+        self.label = newLabel
+    }
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -186,7 +197,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
-    func startAllSensors() {
+    func startAllSensors(with btManager: BluetoothManager) {
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 0.1
             motionManager.startDeviceMotionUpdates(using: .xArbitraryZVertical, to: .main) { data, _ in
@@ -238,7 +249,14 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         gyroZ: motion.rotationRate.z * toDegrees,
                         magX: motion.magneticField.field.x,
                         magY: motion.magneticField.field.y,
-                        magZ: motion.magneticField.field.z
+                        magZ: motion.magneticField.field.z,
+                        //WIT Sensor Data
+                        witAccX: btManager.isConnected ? Double(btManager.accX) : nil,
+                        witAccY: btManager.isConnected ? Double(btManager.accY) : nil,
+                        witAccZ: btManager.isConnected ? Double(btManager.accZ) : nil,
+                        witRoll: btManager.isConnected ? Double(btManager.angleX) : nil,
+                        witPitch: btManager.isConnected ? Double(btManager.angleY) : nil,
+                        witYaw: btManager.isConnected ? Double(btManager.angleZ) : nil
                     )
                     self.recordedData.append(frame)
                 }
@@ -269,26 +287,16 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     ///Add Label
     func applyLabelToSession(id: UUID, label: String) {
         if let index = sessions.firstIndex(where: { $0.id == id }) {
-            let updatedFrames = sessions[index].frames.map { frame in
-                SensorFrame(
-                    timestamp: frame.timestamp,
-                    label: label, // Apply the new label
-                    pitch: frame.pitch, roll: frame.roll, yaw: frame.yaw,
-                    latitude: frame.latitude, longitude: frame.longitude,
-                    pressure: frame.pressure, heading: frame.heading, speed: frame.speed,
-                    accelX: frame.accelX, accelY: frame.accelY, accelZ: frame.accelZ,
-                    gForceX: frame.gForceX, gForceY: frame.gForceY, gForceZ: frame.gForceZ,
-                    gyroX: frame.gyroX, gyroY: frame.gyroY, gyroZ: frame.gyroZ,
-                    magX: frame.magX, magY: frame.magY, magZ: frame.magZ
-                )
+            // Create a copy of the session
+            var updatedSession = sessions[index]
+            
+            // Use 'indices' to modify the frames directly in place
+            for i in updatedSession.frames.indices {
+                updatedSession.frames[i].updateLabel(label)
             }
             
-            // Create a mutable copy of the session
-            var updatedSession = sessions[index]
-            updatedSession.frames = updatedFrames
-            
             LabelManager.shared.saveLabelToHistory(label)
-                    
+            
             DispatchQueue.main.async {
                 self.sessions[index] = updatedSession
                 LocalFileManager.saveSession(updatedSession)

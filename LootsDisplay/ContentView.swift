@@ -122,18 +122,6 @@ struct ContentView: View {
                     
                     //Sensor Data
                     
-//                    Section {
-//                        NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
-//                            HStack {
-//                                Text(btManager.isConnected ? "Sensor Connected" : "Find Sensors")
-//                                    .foregroundColor(btManager.isConnected ? .green : .blue)
-//                                Spacer()
-//                                Image(systemName: btManager.isConnected ? "checkmark.circle.fill" : "wave.3.right")
-//                                    .foregroundColor(btManager.isConnected ? .green : .secondary)
-//                            }
-//                        }
-//                    }
-                    
                     Section {
                         if btManager.isConnected {
                             HStack {
@@ -142,23 +130,6 @@ struct ContentView: View {
                                 Text("Connected: \(btManager.connectedPeripheral?.name ?? "Unknown WT901")")
                                     .fontWeight(.medium)
                                 Spacer()
-                                
-//                                Button {
-//                                    btManager.disconnect()
-//                                } label: {
-//                                    Text("Disconnect")
-//                                        .font(.caption.bold())
-//                                        .padding(.horizontal, 10)
-//                                        .padding(.vertical, 4)
-//                                        .background(Color.red.opacity(0.1)) // Subtle red background
-//                                        .foregroundColor(.red)
-//                                        .cornerRadius(8)
-//                                        .overlay(
-//                                            RoundedRectangle(cornerRadius: 8)
-//                                                .stroke(Color.red.opacity(0.2), lineWidth: 1) // Thin border
-//                                        )
-//                                }
-//                                .buttonStyle(.plain)
                             }
                         } else {
                             NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
@@ -200,18 +171,6 @@ struct ContentView: View {
                             SensorRow(label: "WIT Yaw", value: String(format: "%.2f°", btManager.angleZ))
                         }
                     }
-                    
-//                    Section {
-//                        NavigationLink(destination: BluetoothDeviceView()) {
-//                            HStack {
-//                                Text("Find Sensors")
-//                                    .foregroundColor(.blue)
-//                                Spacer()
-//                                Image(systemName: "swave.3.right")
-//                                    .foregroundColor(.secondary)
-//                            }
-//                        }
-//                    }
                 }
                 
                 VStack(spacing: 12) {
@@ -241,7 +200,7 @@ struct ContentView: View {
                             .padding()
                         }
                         .navigationTitle("Live Sensor Data")
-                        .onAppear { sensors.startAllSensors() }
+                        .onAppear { sensors.startAllSensors(with: btManager) }
                         .alert("Recording Limit Reached", isPresented: $sensors.showLimitAlert) {
                             Button("OK", role: .cancel) {
                                 sensors.showLimitAlert = false
