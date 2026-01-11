@@ -4,7 +4,7 @@ import CoreBluetooth
 class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     // Bluetooth State
     private var centralManager: CBCentralManager!
-    private var connectedPeripheral: CBPeripheral?
+    var connectedPeripheral: CBPeripheral?
     
     // UUIDs from your reference code
     private let serviceUUID = CBUUID(string: "ffe5")
@@ -20,6 +20,10 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     @Published var angleZ: Float = 0.0
     @Published var discoveredDevices: [CBPeripheral] = []
     
+    var isConnected: Bool {
+            connectedPeripheral != nil && connectedPeripheral?.state == .connected
+    }
+    
     override init() {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
@@ -30,6 +34,14 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         discoveredDevices.removeAll()
         // 1. Change serviceUUIDs to nil to see everything
         centralManager.scanForPeripherals(withServices: nil, options: nil)
+    }
+    
+    func stopScanning() {
+        print("BluetoothManager: Stopping Scan...")
+        centralManager?.stopScan()
+        // Optional: Clear the list so it's fresh for next time
+        self.discoveredDevices.removeAll()
+        print("BluetoothManager: Scanning Stopped")
     }
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi: NSNumber) {
@@ -47,6 +59,14 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         connectedPeripheral = peripheral
         connectedPeripheral?.delegate = self
         centralManager.connect(peripheral, options: nil)
+    }
+    
+    func disconnect() {
+        if let peripheral = connectedPeripheral {
+            centralManager?.cancelPeripheralConnection(peripheral)
+            // Note: Setting connectedPeripheral = nil usually happens
+            // in the didDisconnectPeripheral delegate method
+        }
     }
     
     // MARK: - CBCentralManagerDelegate
@@ -138,51 +158,3 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         }
     }
 }
-//import Foundation
-//import CoreBluetooth
-//
-//struct PeripheralDevice: Identifiable {
-//    let id: UUID
-//    let name: String
-//    let rssi: Int
-//}
-//
-//class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate {
-//    @Published var discoveredDevices: [PeripheralDevice] = []
-//    @Published var isScanning = false
-//    
-//    private var centralManager: CBCentralManager!
-//    
-//    override init() {
-//        super.init()
-//        centralManager = CBCentralManager(delegate: self, queue: nil)
-//    }
-//    
-//    func startScanning() {
-//        guard centralManager.state == .poweredOn else { return }
-//        isScanning = true
-//        discoveredDevices.removeAll()
-//        centralManager.scanForPeripherals(withServices: nil, options: nil)
-//    }
-//    
-//    func stopScanning() {
-//        isScanning = false
-//        centralManager.stopScan()
-//    }
-//    
-//    func centralManagerDidUpdateState(_ central: CBCentralManager) {
-//        if central.state == .poweredOn {
-//            // Ready to scan
-//        } else {
-//            isScanning = false
-//        }
-//    }
-//    
-//    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi: NSNumber) {
-//        let name = peripheral.name ?? "Unknown Device"
-//        if !discoveredDevices.contains(where: { $0.id == peripheral.identifier }) {
-//            let device = PeripheralDevice(id: peripheral.identifier, name: name, rssi: rssi.intValue)
-//            discoveredDevices.append(device)
-//        }
-//    }
-//}

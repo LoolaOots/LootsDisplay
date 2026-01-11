@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var sensors = SensorManager()
+    @StateObject var btManager = BluetoothManager()
     @State private var isDurationExpanded = false
 
     var body: some View {
@@ -118,17 +119,99 @@ struct ContentView: View {
                         SensorRow(label: "G-Force Z", value: String(format: "%.2f g", sensors.gForceZ))
                     }
                     
+                    
+                    //Sensor Data
+                    
+//                    Section {
+//                        NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
+//                            HStack {
+//                                Text(btManager.isConnected ? "Sensor Connected" : "Find Sensors")
+//                                    .foregroundColor(btManager.isConnected ? .green : .blue)
+//                                Spacer()
+//                                Image(systemName: btManager.isConnected ? "checkmark.circle.fill" : "wave.3.right")
+//                                    .foregroundColor(btManager.isConnected ? .green : .secondary)
+//                            }
+//                        }
+//                    }
+                    
                     Section {
-                        NavigationLink(destination: ExperimentalFeaturesView()) {
+                        if btManager.isConnected {
                             HStack {
-                                Text("Experimental Features")
-                                    .foregroundColor(.blue) // Optional: Makes it look more like a button
+                                Image(systemName: "sensor.fill")
+                                    .foregroundColor(.green)
+                                Text("Connected: \(btManager.connectedPeripheral?.name ?? "Unknown WT901")")
+                                    .fontWeight(.medium)
                                 Spacer()
-                                Image(systemName: "flask")
-                                    .foregroundColor(.secondary)
+                                
+//                                Button {
+//                                    btManager.disconnect()
+//                                } label: {
+//                                    Text("Disconnect")
+//                                        .font(.caption.bold())
+//                                        .padding(.horizontal, 10)
+//                                        .padding(.vertical, 4)
+//                                        .background(Color.red.opacity(0.1)) // Subtle red background
+//                                        .foregroundColor(.red)
+//                                        .cornerRadius(8)
+//                                        .overlay(
+//                                            RoundedRectangle(cornerRadius: 8)
+//                                                .stroke(Color.red.opacity(0.2), lineWidth: 1) // Thin border
+//                                        )
+//                                }
+//                                .buttonStyle(.plain)
+                            }
+                        } else {
+                            NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
+                                HStack {
+                                    Text("Find Sensors")
+                                        .foregroundColor(.blue)
+                                    Spacer()
+                                    Image(systemName: "sensor")
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
+                        
+                        if btManager.isConnected {
+                            Section {
+                                Button(role: .destructive) {
+                                    btManager.disconnect()
+                                } label: {
+                                    Text("Disconnect Sensor")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                            }
+                        }
+                        
+                    } header: {
+                        Text("External Sensor")
                     }
+                    
+                    if btManager.isConnected {
+                        Section(header: Text("WIT Motion: Acceleration (G)")) {
+                            SensorRow(label: "WIT Accel X", value: String(format: "%.3f", btManager.accX))
+                            SensorRow(label: "WIT Accel Y", value: String(format: "%.3f", btManager.accY))
+                            SensorRow(label: "WIT Accel Z", value: String(format: "%.3f", btManager.accZ))
+                        }
+                        
+                        Section(header: Text("WIT Motion: Orientation")) {
+                            SensorRow(label: "WIT Roll", value: String(format: "%.2f°", btManager.angleX))
+                            SensorRow(label: "WIT Pitch", value: String(format: "%.2f°", btManager.angleY))
+                            SensorRow(label: "WIT Yaw", value: String(format: "%.2f°", btManager.angleZ))
+                        }
+                    }
+                    
+//                    Section {
+//                        NavigationLink(destination: BluetoothDeviceView()) {
+//                            HStack {
+//                                Text("Find Sensors")
+//                                    .foregroundColor(.blue)
+//                                Spacer()
+//                                Image(systemName: "swave.3.right")
+//                                    .foregroundColor(.secondary)
+//                            }
+//                        }
+//                    }
                 }
                 
                 VStack(spacing: 12) {
