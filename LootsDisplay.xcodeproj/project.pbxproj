@@ -45,6 +45,11 @@
 			path = LootsDisplayUITests;
 			sourceTree = "<group>";
 		};
+		D0EDF0872F0C9D610038104A /* .github */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = .github;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +80,7 @@
 		D0EDF0132F0189F60038104A = {
 			isa = PBXGroup;
 			children = (
+				D0EDF0872F0C9D610038104A /* .github */,
 				D0EDF01E2F0189F60038104A /* LootsDisplay */,
 				D0EDF02C2F0189F70038104A /* LootsDisplayTests */,
 				D0EDF0362F0189F70038104A /* LootsDisplayUITests */,
@@ -109,6 +115,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				D0EDF01E2F0189F60038104A /* LootsDisplay */,
+				D0EDF0872F0C9D610038104A /* .github */,
 			);
 			name = LootsDisplay;
 			packageProductDependencies = (

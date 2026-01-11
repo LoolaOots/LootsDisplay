@@ -13,6 +13,8 @@ import UIKit
 
 struct SensorFrame: Codable {
     let timestamp: Date
+    let label: String?
+    
     let pitch: Double
     let roll: Double
     let yaw: Double
@@ -44,7 +46,7 @@ struct SensorFrame: Codable {
 struct RecordingSession: Identifiable, Codable {
     var id = UUID()
     let startTime: Date
-    let frames: [SensorFrame]
+    var frames: [SensorFrame]
     
     var title: String {
         let formatter = DateFormatter()
@@ -58,6 +60,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let motionManager = CMMotionManager()
     private let altimeter = CMAltimeter()
     private let locationManager = CLLocationManager()
+    private let limitKey = "user_recording_limit"
     
     // UI State
     @Published var acceleration = (x: 0.0, y: 0.0, z: 0.0)
@@ -82,21 +85,27 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var isRecording = false
     @Published var recordedData: [SensorFrame] = []
     @Published var secondsElapsed = 0 // Track the recording duration
-        
+    //Persistent data via UserDefaults
+    @Published var recordingLimit: Int {
+        didSet {
+            UserDefaults.standard.set(recordingLimit, forKey: limitKey) //get user set recording duration or use default
+        }
+    }
+    
+    //Recording
     @Published var sessions: [RecordingSession] = []
     
+    //Maximum recordings
     @Published var showLimitAlert = false // For the "Max Reached" popup
-    @Published var showAlert = false
-    @Published var alertTitle = ""
-    @Published var alertMessage = ""
-    
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
-    
+    private var recordedHistoryLimit = 10
     
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? // Timer for the UI counter
     
     override init() {
+        let savedLimit = UserDefaults.standard.integer(forKey: limitKey)
+        self.recordingLimit = savedLimit > 0 ? savedLimit : 45
         super.init()
         LocalFileManager.setupFolder()
         self.sessions = LocalFileManager.loadSessions()
@@ -111,7 +120,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             stopRecording()
         } else {
             DispatchQueue.main.async {
-                if self.sessions.count >= 3 {
+                if self.sessions.count >= self.recordedHistoryLimit {
                     self.showLimitAlert = true
                 } else {
                     self.startRecording()
@@ -125,19 +134,18 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         secondsElapsed = 0
         isRecording = true
             
-        // Timer for the 45-second limit
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 45.0, repeats: false) { _ in
+        //dynamic limit set by the slider
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: Double(recordingLimit), repeats: false) { _ in
             self.stopRecording()
         }
             
-        // Timer to update the UI counter every second
         secondsTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if self.secondsElapsed < 45 {
+            if self.secondsElapsed < self.recordingLimit {
                 self.secondsElapsed += 1
             }
         }
     }
-
+    
     private func stopRecording() {
         isRecording = false
         recordingTimer?.invalidate()
@@ -152,12 +160,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         recordingTimer = nil
         secondsTimer = nil
-        saveDataToDisk() //DELETE OR CHANGE LATER
-    }
-
-    private func saveDataToDisk() {
         print("Stopped! Captured \(recordedData.count) samples.")
-        // Here you could convert recordedData to a JSON or CSV file
     }
     
     func deleteSession(at offsets: IndexSet) {
@@ -215,6 +218,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     let currentSpeed = self.locationManager.location?.speed ?? 0.0
                     let frame = SensorFrame(
                         timestamp: Date(),
+                        label: nil,
                         pitch: motion.attitude.pitch,
                         roll: motion.attitude.roll,
                         yaw: motion.attitude.yaw,
@@ -262,119 +266,33 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         self.heading = newHeading.magneticHeading
     }
     
-    func saveSessionAsCSV(_ session: RecordingSession) {
-        // 1. Create a clean timestamp for the filename (e.g., 2026-01-01_1315)
-        let fileDateFormatter = DateFormatter()
-        fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
-        let dateString = fileDateFormatter.string(from: session.startTime)
-        
-        let fileName = "SensorLog_\(dateString).csv"
-        
-        // 2. Create the Header Row
-        var csvString = "Timestamp,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
-        
-        // 3. Create the Data Rows
-        let isoFormatter = ISO8601DateFormatter()
-        
-        for frame in session.frames {
-            let row = [
-                isoFormatter.string(from: frame.timestamp),
-                "\(frame.pitch)",
-                "\(frame.roll)",
-                "\(frame.yaw)",
-                "\(frame.latitude)",
-                "\(frame.longitude)",
-                "\(frame.pressure)",
-                "\(frame.heading)",
-                "\(frame.speed)",
-                "\(frame.accelX)",
-                "\(frame.accelY)",
-                "\(frame.accelZ)",
-                "\(frame.gForceX)",
-                "\(frame.gForceY)",
-                "\(frame.gForceZ)",
-                "\(frame.gyroX)",
-                "\(frame.gyroY)",
-                "\(frame.gyroZ)",
-                "\(frame.magX)",
-                "\(frame.magY)",
-                "\(frame.magZ)"
-            ].joined(separator: ",")
-            
-            csvString.append(row + "\n")
-        }
-        
-        // 4. Send to disk with the new filename
-        saveCSVToDisk(csvString: csvString, fileName: fileName)
-    }
-    
-    func saveSessionsAsCSV(_ selectedSessions: [RecordingSession]) {
-        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("BulkExport_\(UUID().uuidString.prefix(6))")
-        
-        do {
-            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-            
-            for session in selectedSessions {
-                let csvData = generateCSVString(for: session)
-                let fileDateFormatter = DateFormatter()
-                fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
-                let dateString = fileDateFormatter.string(from: session.startTime)
-                
-                let fileName = "SensorLog_\(dateString).csv"
-                
-                let fileURL = tempDir.appendingPathComponent(fileName)
-                try csvData.write(to: fileURL, atomically: true, encoding: .utf8)
+    ///Add Label
+    func applyLabelToSession(id: UUID, label: String) {
+        if let index = sessions.firstIndex(where: { $0.id == id }) {
+            let updatedFrames = sessions[index].frames.map { frame in
+                SensorFrame(
+                    timestamp: frame.timestamp,
+                    label: label, // Apply the new label
+                    pitch: frame.pitch, roll: frame.roll, yaw: frame.yaw,
+                    latitude: frame.latitude, longitude: frame.longitude,
+                    pressure: frame.pressure, heading: frame.heading, speed: frame.speed,
+                    accelX: frame.accelX, accelY: frame.accelY, accelZ: frame.accelZ,
+                    gForceX: frame.gForceX, gForceY: frame.gForceY, gForceZ: frame.gForceZ,
+                    gyroX: frame.gyroX, gyroY: frame.gyroY, gyroZ: frame.gyroZ,
+                    magX: frame.magX, magY: frame.magY, magZ: frame.magZ
+                )
             }
             
-            // Present the folder to the user
+            // Create a mutable copy of the session
+            var updatedSession = sessions[index]
+            updatedSession.frames = updatedFrames
+            
+            LabelManager.shared.saveLabelToHistory(label)
+                    
             DispatchQueue.main.async {
-                let activityVC = UIActivityViewController(activityItems: [tempDir], applicationActivities: nil)
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let rootVC = windowScene.windows.first?.rootViewController {
-                    rootVC.present(activityVC, animated: true)
-                }
+                self.sessions[index] = updatedSession
+                LocalFileManager.saveSession(updatedSession)
             }
-        } catch {
-            print("Bulk save failed: \(error)")
-        }
-    }
-    
-    private func generateCSVString(for session: RecordingSession) -> String {
-        var csvString = "Timestamp,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
-        let isoFormatter = ISO8601DateFormatter()
-        
-        for frame in session.frames {
-            let row = [
-                isoFormatter.string(from: frame.timestamp),
-                "\(frame.pitch)", "\(frame.roll)", "\(frame.yaw)",
-                "\(frame.latitude)", "\(frame.longitude)", "\(frame.pressure)",
-                "\(frame.heading)", "\(frame.speed)",
-                "\(frame.accelX)", "\(frame.accelY)", "\(frame.accelZ)",
-                "\(frame.gForceX)", "\(frame.gForceY)", "\(frame.gForceZ)",
-                "\(frame.gyroX)", "\(frame.gyroY)", "\(frame.gyroZ)",
-                "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)"
-            ].joined(separator: ",")
-            csvString.append(row + "\n")
-        }
-        return csvString
-    }
-
-    private func saveCSVToDisk(csvString: String, fileName: String) {
-        let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-        
-        do {
-            try csvString.write(to: path, atomically: true, encoding: .utf8)
-            
-            DispatchQueue.main.async {
-                let activityVC = UIActivityViewController(activityItems: [path], applicationActivities: nil)
-                
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let rootVC = windowScene.windows.first?.rootViewController {
-                    rootVC.present(activityVC, animated: true)
-                }
-            }
-        } catch {
-            print("Failed to create CSV: \(error)")
         }
     }
 }

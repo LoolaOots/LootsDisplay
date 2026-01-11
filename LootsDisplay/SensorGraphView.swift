@@ -53,6 +53,32 @@ struct SensorGraphView: View {
     var body: some View {
         VStack {
             List {
+                //Session Info
+                Section {
+                    HStack(alignment: .center, spacing: 10) {
+                        // The Date/Time Title
+                        Text(session.title)
+                            .font(.headline)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        if let tag = sessionTag {
+                            HStack(spacing: 4) {
+                                Image(systemName: "tag.fill")
+                                    .font(.system(size: 8))
+                                Text(tag.uppercased())
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Color.blue))
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                
                 Section {
                     Chart {
                         ForEach(Array(session.frames.enumerated()), id: \.offset) { index, frame in
@@ -179,7 +205,10 @@ struct SensorGraphView: View {
         }
     }
     
-
+    private var sessionTag: String? {
+        session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
+    }
+    
     @ViewBuilder
     func sensorToggleGroup(title: String, types: [SensorType]) -> some View {
         let selectedCount = types.filter { selectedTypes.contains($0) }.count
