@@ -273,7 +273,13 @@ struct ContentView: View {
     }
 
     private var buttonColor: Color {
-        return (sensors.isCountingDown || sensors.isRecording) ? .red : .blue
+        if sensors.isCountingDown {
+            return .gray
+        } else if sensors.isRecording {
+            return .red
+        } else {
+            return .blue 
+        }
     }
 }
 
