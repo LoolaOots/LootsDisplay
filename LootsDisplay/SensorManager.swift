@@ -91,6 +91,13 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             UserDefaults.standard.set(recordingLimit, forKey: limitKey) //get user set recording duration or use default
         }
     }
+    @Published var isCountingDown = false
+    @Published var countdownRemaining = 0 //Track countdown duration
+    @Published var recordingDelay: Int {
+        didSet {
+            UserDefaults.standard.set(recordingDelay, forKey: "recordingDelay")
+        }
+    }
     
     //Recording
     @Published var sessions: [RecordingSession] = []
@@ -98,7 +105,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     //Maximum recordings
     @Published var showLimitAlert = false // For the "Max Reached" popup
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
-    private var recordedHistoryLimit = 10
+    var recordedHistoryLimit = 10
     
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? // Timer for the UI counter
@@ -106,6 +113,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     override init() {
         let savedLimit = UserDefaults.standard.integer(forKey: limitKey)
         self.recordingLimit = savedLimit > 0 ? savedLimit : 45
+        self.recordingDelay = UserDefaults.standard.integer(forKey: "recordingDelay")
         super.init()
         LocalFileManager.setupFolder()
         self.sessions = LocalFileManager.loadSessions()
@@ -146,7 +154,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    private func stopRecording() {
+    func stopRecording() {
         isRecording = false
         recordingTimer?.invalidate()
         secondsTimer?.invalidate()
