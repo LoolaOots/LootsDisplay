@@ -40,7 +40,6 @@ struct SensorFrame: Codable {
     let magX: Double
     let magY: Double
     let magZ: Double
-    //let magAccuracy: Int // 0: Uncalibrated, 1: Low, 2: Medium, 3: High
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -79,7 +78,6 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var magX: Double = 0.0
     @Published var magY: Double = 0.0
     @Published var magZ: Double = 0.0
-    @Published var magAccuracy: Int = -1
     
     // Recording State
     @Published var isRecording = false
@@ -195,6 +193,18 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func startAllSensors() {
+        
+        if motionManager.isMagnetometerAvailable {
+                motionManager.magnetometerUpdateInterval = 0.1
+                motionManager.startMagnetometerUpdates(to: .main) { data, _ in
+                    guard let magData = data else { return }
+                    // live view for magnetometer
+                    self.magX = magData.magneticField.x
+                    self.magY = magData.magneticField.y
+                    self.magZ = magData.magneticField.z
+                }
+            }
+        
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 0.1
             motionManager.startDeviceMotionUpdates(using: .xArbitraryZVertical, to: .main) { data, _ in
@@ -202,19 +212,15 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 let toDegrees = 180.0 / .pi
                 
                 //Live view
+                
                 self.acceleration = (motion.userAcceleration.x, motion.userAcceleration.y, motion.userAcceleration.z)
                 self.attitude = (motion.attitude.pitch, motion.attitude.roll, motion.attitude.yaw)
                 self.gyroX = motion.rotationRate.x * toDegrees
                 self.gyroY = motion.rotationRate.y * toDegrees
                 self.gyroZ = motion.rotationRate.z * toDegrees
-                self.magX = motion.magneticField.field.x
-                self.magY = motion.magneticField.field.y
-                self.magZ = motion.magneticField.field.z
-                self.magAccuracy = Int(motion.magneticField.accuracy.rawValue)
                 self.gForceX = motion.userAcceleration.x + motion.gravity.x
                 self.gForceY = motion.userAcceleration.y + motion.gravity.y
                 self.gForceZ = motion.userAcceleration.z + motion.gravity.z
-                //self.speed = self.locationManager.location?.speed ?? 0.0
                 let rawSpeed = self.locationManager.location?.speed ?? 0.0
                 self.speed = max(0.0, rawSpeed)
                 
@@ -244,9 +250,9 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         gyroX: motion.rotationRate.x * toDegrees,
                         gyroY: motion.rotationRate.y * toDegrees,
                         gyroZ: motion.rotationRate.z * toDegrees,
-                        magX: motion.magneticField.field.x,
-                        magY: motion.magneticField.field.y,
-                        magZ: motion.magneticField.field.z
+                        magX: self.magX,
+                        magY: self.magY,
+                        magZ: self.magZ
                     )
                     self.recordedData.append(frame)
                 }

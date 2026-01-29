@@ -145,16 +145,10 @@ struct ContentView: View {
                             SensorRow(label: "Rotation Z", value: String(format: "%.1f °/s", sensors.gyroZ))
                         }
                         
-                        Section {
+                        Section(header: Text("Magnetometer")) {
                             SensorRow(label: "Mag X", value: String(format: "%.1f µT", sensors.magX))
                             SensorRow(label: "Mag Y", value: String(format: "%.1f µT", sensors.magY))
                             SensorRow(label: "Mag Z", value: String(format: "%.1f µT", sensors.magZ))
-                        } header: {
-                            HStack {
-                                Text("Magnetometer")
-                                Spacer()
-                                calibrationStatusView(accuracy: sensors.magAccuracy)
-                            }
                         }
                         
                         Section(header: Text("G-Force")) {
@@ -165,16 +159,6 @@ struct ContentView: View {
                     }
                     
                     VStack(spacing: 12) {
-                        
-                        //                    Button(action: { sensors.toggleRecording() }) {
-                        //                    Text(sensors.isRecording ? "STOP RECORDING" : "START RECORDING")
-                        //                        .font(.headline)
-                        //                        .foregroundColor(.white)
-                        //                        .frame(maxWidth: .infinity)
-                        //                        .padding()
-                        //                        .background(sensors.isRecording ? Color.red : Color.blue)
-                        //                        .cornerRadius(10)
-                        //                    }
                         //Start/Stop button
                         Button(action: { handleStartStop() }) {
                             Text(buttonText)
