@@ -6,6 +6,8 @@ struct DataHistoryView: View {
     @State private var selectedSessionIDs = Set<UUID>()
     //selection mode
     @State private var editMode: EditMode = .inactive
+    //... menu
+    @State private var selectedSession: RecordingSession? = nil
     
     //label
     @State private var showingLabelAlert = false
@@ -16,6 +18,18 @@ struct DataHistoryView: View {
     @StateObject private var labelManager = LabelManager.shared
     
     var body: some View {
+        NavigationLink(
+            destination: Group {
+                if let session = selectedSession {
+                    SensorGraphView(session: session)
+                }
+            },
+            isActive: Binding(
+                get: { selectedSession != nil },
+                set: { if !$0 { selectedSession = nil } }
+            )
+        ) { EmptyView() }
+        
         VStack(spacing: 0) {
             historyList
         }
@@ -62,7 +76,8 @@ struct DataHistoryView: View {
                     ForEach(sensors.sessions) { session in
                         SessionRowView(
                             session: session,
-                            sensors: sensors,
+                            
+                            selectedSession: $selectedSession,
                             sessionsToLabel: $sessionsToLabel,
                             showingLabelAlert: $showingLabelAlert
                         )
@@ -210,8 +225,89 @@ struct DataHistoryView: View {
 
 struct SessionRowView: View {
     let session: RecordingSession
+    @Binding var selectedSession: RecordingSession?
+    @Binding var sessionsToLabel: [RecordingSession]
+    @Binding var showingLabelAlert: Bool
+    
+    // Efficiently find the first label assigned to this session
+    private var sessionLabel: String? {
+        session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
+    }
+    
+    var body: some View {
+        // We use a plain Button for the whole row to force iOS to treat it
+        // as a single interactive element, then we "intercept" the menu tap.
+        HStack {
+            // Content Area
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .center, spacing: 8) {
+                    Text(session.title).font(.headline).lineLimit(1)
+                    if let label = sessionLabel { labelTag(label) }
+                }
+                Text("\(session.frames.count) frames captured")
+                    .font(.subheadline).foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // This allows us to tap the text area to navigate
+            .onTapGesture {
+                selectedSession = session
+            }
+
+            Spacer()
+
+            // The Menu
+            // We use a ContextMenu-style Menu but with a very specific style
+            Menu {
+                Button { CSVManager.exportSingleSessionAsCSV(session) } label: {
+                    Label("Save", systemImage: "square.and.arrow.down")
+                }
+                Button {
+                    sessionsToLabel = [session]
+                    showingLabelAlert = true
+                } label: {
+                    Label("Label", systemImage: "tag")
+                }
+
+                
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+                    .padding(12)
+                    .background(Color.white.opacity(0.001))
+            }
+            // CRITICAL: Tells the List "don't manage this button's tap"
+            .buttonStyle(PlainButtonStyle())
+            .highPriorityGesture(TapGesture())
+            
+            Image(systemName: "chevron.right")
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
+        }
+        .contentShape(Rectangle())
+    }
+    
+    @ViewBuilder
+    private func labelTag(_ text: String) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: "tag.fill")
+                .font(.system(size: 8))
+            Text(text.uppercased())
+                .font(.system(size: 10, weight: .bold))
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(Capsule().fill(Color.blue))
+        .fixedSize() // Prevents the tag from squishing
+    }
+}
+
+struct SessionRowViewx: View {
+    let session: RecordingSession
     @ObservedObject var sensors: SensorManager
     @Environment(\.editMode) private var editMode
+    @Binding var selectedSession: RecordingSession?
     @Binding var sessionsToLabel: [RecordingSession]
     @Binding var showingLabelAlert: Bool
 
@@ -219,45 +315,44 @@ struct SessionRowView: View {
     private var sessionLabel: String? {
         session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
     }
+    
+    
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                // Date Title + Label Tag
-                HStack(alignment: .center, spacing: 8) {
-                    Text(session.title)
-                        .font(.system(.headline))
-                        .lineLimit(1)
-                    
-                    if let label = sessionLabel {
-                        labelTag(label)
+            HStack {
+                // LEFT SIDE: The Info (Tapping this navigates)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .center, spacing: 8) {
+                        Text(session.title)
+                            .font(.system(.headline))
+                        if let label = sessionLabel { labelTag(label) }
                     }
+                    Text("\(session.frames.count) frames captured")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
-                
-                // Subheadline
-                Text("\(session.frames.count) frames captured")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // MANUALLY TRIGGER NAVIGATION
+                    self.selectedSession = session
+                }
+
+                Spacer()
+
+                // RIGHT SIDE: The Menu (Tapping this opens menu)
+                if editMode?.wrappedValue == .inactive {
+                    rowActionMenu
+                        .buttonStyle(BorderlessButtonStyle())
+                        .onTapGesture { } // Stops tap from reaching the row logic
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                }
             }
-            
-            Spacer()
-            
-            // Interaction logic
-            if editMode?.wrappedValue == .inactive {
-                rowActionMenu
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundColor(.secondary)
-            }
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
-        // Ensure that tapping the row goes to the graph ONLY when not selecting
-        .background(
-            NavigationLink("", destination: SensorGraphView(session: session))
-                .opacity(0)
-        )
-    }
 
     // tag UI
     @ViewBuilder
@@ -276,6 +371,7 @@ struct SessionRowView: View {
     }
     
     //... menu
+    @ViewBuilder
     private var rowActionMenu: some View {
         Menu {
             Button {
@@ -298,6 +394,7 @@ struct SessionRowView: View {
             } label: {
                 Label("Delete", systemImage: "trash")
             }
+            
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.title2)
