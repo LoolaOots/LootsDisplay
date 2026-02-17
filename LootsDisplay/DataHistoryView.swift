@@ -237,13 +237,12 @@ struct SessionRowView: View {
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showingActionSheet) {
-                    VStack(alignment: .center, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 0) {
                         Button {
                             CSVManager.exportSingleSessionAsCSV(session)
                             showingActionSheet = false
                         } label: {
                             Label("Save", systemImage: "square.and.arrow.down")
-                                .frame(width: 150, alignment: .leading)
                                 .padding()
                         }
                         Button {
@@ -252,7 +251,6 @@ struct SessionRowView: View {
                             showingActionSheet = false
                         } label: {
                             Label("Label", systemImage: "tag")
-                                .frame(width: 150, alignment: .leading)
                                 .padding()
                         }
                         Button(role: .destructive) {
@@ -262,10 +260,11 @@ struct SessionRowView: View {
                             showingActionSheet = false
                         } label: {
                             Label("Delete", systemImage: "trash")
-                                .frame(width: 150, alignment: .leading)
                                 .padding()
                         }
                     }
+                   // .frame(minWidth: 150, alignment: .leading)
+                    .padding(.horizontal, 24)
                     .presentationCompactAdaptation(.popover)
                 }
                 Image(systemName: "chevron.right")
