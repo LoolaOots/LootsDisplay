@@ -172,6 +172,7 @@ struct DataHistoryView: View {
 
         Spacer()
 
+        //... menu multi selection
         Menu {
             Button {
                 bulkSaveCSV()
@@ -182,7 +183,7 @@ struct DataHistoryView: View {
                 sessionsToLabel = sensors.sessions.filter { selectedSessionIDs.contains($0.id) }
                 showingLabelAlert = true
             } label: {
-                Label("Label", systemImage: "tag.stack")
+                Label("Label", systemImage: "tag")
             }
         } label: {
             Image(systemName: "ellipsis.circle")
@@ -226,7 +227,7 @@ struct SessionRowView: View {
             Spacer()
             
             if editMode?.wrappedValue == .inactive {
-                //... menu
+                //... menu single selection
                 Button {
                     showingActionSheet = true
                 } label: {
@@ -237,21 +238,29 @@ struct SessionRowView: View {
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showingActionSheet) {
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(spacing: 0) {
                         Button {
                             CSVManager.exportSingleSessionAsCSV(session)
                             showingActionSheet = false
                         } label: {
-                            Label("Save", systemImage: "square.and.arrow.down")
-                                .padding()
+                            HStack {
+                                Image(systemName: "square.and.arrow.down")
+                                Text("Save")
+                                Spacer()
+                            }
+                            .padding()
                         }
                         Button {
                             sessionsToLabel = [session]
                             showingLabelAlert = true
                             showingActionSheet = false
                         } label: {
-                            Label("Label", systemImage: "tag")
-                                .padding()
+                            HStack {
+                                Image(systemName: "tag")
+                                Text("Label")
+                                Spacer()
+                            }
+                            .padding()
                         }
                         Button(role: .destructive) {
                             if let index = sensors.sessions.firstIndex(where: { $0.id == session.id }) {
@@ -259,12 +268,16 @@ struct SessionRowView: View {
                             }
                             showingActionSheet = false
                         } label: {
-                            Label("Delete", systemImage: "trash")
-                                .padding()
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Delete")
+                                Spacer()
+                            }
+                            .padding()
                         }
                     }
-                   // .frame(minWidth: 150, alignment: .leading)
-                    .padding(.horizontal, 24)
+                    .frame(minWidth: 180)
+                    .padding(.horizontal, 8)
                     .presentationCompactAdaptation(.popover)
                 }
                 Image(systemName: "chevron.right")
