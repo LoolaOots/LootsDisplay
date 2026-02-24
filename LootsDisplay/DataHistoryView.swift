@@ -121,12 +121,38 @@ struct DataHistoryView: View {
         }
     }
 
+    
     @ToolbarContentBuilder
     private var bottomToolbarItems: some ToolbarContent {
-        ToolbarItemGroup(placement: .bottomBar) {
-            if editMode == .active {
-                renderBottomBarButtons()
+        ToolbarItem(placement: .bottomBar) {
+            Button(role: .destructive) {
+                deleteSelected()
+            } label: {
+                Image(systemName: "trash")
+                    .font(.title3)
             }
+            .tint(.red)
+            .disabled(selectedSessionIDs.isEmpty)
+        }
+
+        ToolbarItem(placement: .bottomBar) {
+            Text(selectedSessionIDs.isEmpty ? "Select Samples" : "\(selectedSessionIDs.count) Selected")
+                .font(.headline)
+                .foregroundColor(.primary)
+                .fixedSize()
+                .transition(.scale.combined(with: .opacity))
+        }
+
+        ToolbarItemGroup(placement: .bottomBar) {
+            Button("Save", systemImage: "square.and.arrow.down") {
+                bulkSaveCSV()
+            }
+            .disabled(selectedSessionIDs.isEmpty)
+            Button("Label", systemImage: "tag") {
+                sessionsToLabel = sensors.sessions.filter { selectedSessionIDs.contains($0.id) }
+                showingLabelAlert = true
+            }
+            .disabled(selectedSessionIDs.isEmpty)
         }
     }
     
@@ -150,46 +176,6 @@ struct DataHistoryView: View {
             return
         }
         CSVManager.exportSessionsAsCSV(selectedSessions)
-    }
-    
-    @ViewBuilder
-    private func renderBottomBarButtons() -> some View {
-        Button(role: .destructive) {
-            deleteSelected()
-        } label: {
-            Image(systemName: "trash")
-                .font(.title3)
-        }
-        .tint(.red)
-        .disabled(selectedSessionIDs.isEmpty)
-
-        Spacer()
-
-        Text(selectedSessionIDs.isEmpty ? "Select Samples" : "\(selectedSessionIDs.count) Selected")
-            .font(.headline)
-            .foregroundColor(.primary)
-            .transition(.scale.combined(with: .opacity))
-
-        Spacer()
-
-        //... menu multi selection
-        Menu {
-            Button {
-                bulkSaveCSV()
-            } label: {
-                Label("Save", systemImage: "square.and.arrow.down")
-            }
-            Button {
-                sessionsToLabel = sensors.sessions.filter { selectedSessionIDs.contains($0.id) }
-                showingLabelAlert = true
-            } label: {
-                Label("Label", systemImage: "tag")
-            }
-        } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.title3)
-        }
-        .disabled(selectedSessionIDs.isEmpty)
     }
 }
 
