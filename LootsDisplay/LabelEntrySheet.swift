@@ -1,13 +1,6 @@
-//
-//  LabelEntrySheet.swift
-//  LootsDisplay
-//
-//  Created by Nat on 1/6/26.
-//
-
-
 import SwiftUI
 
+//Enter in label sheet for data history view
 struct LabelEntrySheet: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var sensors: SensorManager
@@ -63,6 +56,6 @@ struct LabelEntrySheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large]) // Makes it a half-height sheet
+        .presentationDetents([.medium, .large])
     }
 }
