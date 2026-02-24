@@ -1,10 +1,3 @@
-////
-////  SensorManager.swift
-////  LootsDisplay
-////
-////  Created by Nat on 12/28/25.
-////
-
 import Foundation
 import CoreMotion
 import CoreLocation
@@ -24,19 +17,19 @@ struct SensorFrame: Codable {
     let pressure: Double
     let heading: Double
     let speed: Double
-    // User Acceleration
+    //User Acceleration
     let accelX: Double
     let accelY: Double
     let accelZ: Double
-    // Total G-Force (Total Accel)
+    //G-Force
     let gForceX: Double
     let gForceY: Double
     let gForceZ: Double
-    // Gyroscope (Rotation Rate)
+    //Gyroscope
     let gyroX: Double
     let gyroY: Double
     let gyroZ: Double
-    // Magnetometer (Calibrated Magnetic Field)
+    //Magnetometer
     let magX: Double
     let magY: Double
     let magZ: Double
@@ -82,7 +75,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     // Recording State
     @Published var isRecording = false
     @Published var recordedData: [SensorFrame] = []
-    @Published var secondsElapsed = 0 // Track the recording duration
+    @Published var secondsElapsed = 0 //Track recording duration
     //Persistent data via UserDefaults
     @Published var recordingLimit: Int {
         didSet {
@@ -101,12 +94,12 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var sessions: [RecordingSession] = []
     
     //Maximum recordings
-    @Published var showLimitAlert = false // For the "Max Reached" popup
+    @Published var showLimitAlert = false //max recording limit reached alert
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
     var recordedHistoryLimit = 10
     
     private var recordingTimer: Timer?
-    private var secondsTimer: Timer? // Timer for the UI counter
+    private var secondsTimer: Timer? //Timer for the UI counter
     
     override init() {
         let savedLimit = UserDefaults.standard.integer(forKey: limitKey)
@@ -120,7 +113,6 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.requestWhenInUseAuthorization()
     }
 
-    // Toggle Recording
     func toggleRecording() {
         if isRecording {
             stopRecording()
@@ -157,7 +149,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         recordingTimer?.invalidate()
         secondsTimer?.invalidate()
         
-        // Save the finished recording as a session
+        //Save the finished recording as a session
         if !recordedData.isEmpty {
             let newSession = RecordingSession(startTime: Date().addingTimeInterval(-Double(secondsElapsed)), frames: recordedData)
             LocalFileManager.saveSession(newSession)
@@ -174,7 +166,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             let session = sessions[index]
             LocalFileManager.deleteSession(id: session.id)
         }
-        self.sessions = LocalFileManager.loadSessions() // Refresh list
+        self.sessions = LocalFileManager.loadSessions() //Refresh list
         DispatchQueue.main.async {
             self.recordedData = []
             self.secondsElapsed = 0
@@ -193,26 +185,24 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func startAllSensors() {
-        
+        //live view for magnetometer
         if motionManager.isMagnetometerAvailable {
                 motionManager.magnetometerUpdateInterval = 0.1
                 motionManager.startMagnetometerUpdates(to: .main) { data, _ in
                     guard let magData = data else { return }
-                    // live view for magnetometer
                     self.magX = magData.magneticField.x
                     self.magY = magData.magneticField.y
                     self.magZ = magData.magneticField.z
                 }
             }
         
+        //live view for motion data
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 0.1
             motionManager.startDeviceMotionUpdates(using: .xArbitraryZVertical, to: .main) { data, _ in
                 guard let motion = data else { return }
                 let toDegrees = 180.0 / .pi
-                
-                //Live view
-                
+
                 self.acceleration = (motion.userAcceleration.x, motion.userAcceleration.y, motion.userAcceleration.z)
                 self.attitude = (motion.attitude.pitch, motion.attitude.roll, motion.attitude.yaw)
                 self.gyroX = motion.rotationRate.x * toDegrees
@@ -224,7 +214,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 let rawSpeed = self.locationManager.location?.speed ?? 0.0
                 self.speed = max(0.0, rawSpeed)
                 
-                // Capture data
+                // Capture data and save to sensor frame which becomes recording data
                 if self.isRecording {
                     let totalX = motion.userAcceleration.x + motion.gravity.x
                     let totalY = motion.userAcceleration.y + motion.gravity.y
@@ -280,13 +270,12 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         self.heading = newHeading.magneticHeading
     }
     
-    ///Add Label
     func applyLabelToSession(id: UUID, label: String) {
         if let index = sessions.firstIndex(where: { $0.id == id }) {
             let updatedFrames = sessions[index].frames.map { frame in
                 SensorFrame(
                     timestamp: frame.timestamp,
-                    label: label, // Apply the new label
+                    label: label, //Apply new label
                     pitch: frame.pitch, roll: frame.roll, yaw: frame.yaw,
                     latitude: frame.latitude, longitude: frame.longitude,
                     pressure: frame.pressure, heading: frame.heading, speed: frame.speed,
@@ -297,7 +286,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 )
             }
             
-            // Create a mutable copy of the session
+            //adds label to existing recording data
             var updatedSession = sessions[index]
             updatedSession.frames = updatedFrames
             

@@ -1,17 +1,9 @@
-//
-//  LocalFileManager.swift
-//  LootsDisplay
-//
-//  Created by Nat on 12/29/25.
-//
-
-
 import Foundation
 
 struct LocalFileManager {
     static let folderName = "SensorRecordings"
     
-    // Gets the path to the folder where we save data
+    //folder path where data is saved
     private static func getFolderURL() -> URL? {
         FileManager.default
             .urls(for: .documentDirectory, in: .userDomainMask)
@@ -19,7 +11,7 @@ struct LocalFileManager {
             .appendingPathComponent(folderName)
     }
     
-    // Create the folder if it doesn't exist
+    //create if folder path doesnt exist
     static func setupFolder() {
         guard let url = getFolderURL() else { return }
         if !FileManager.default.fileExists(atPath: url.path) {
@@ -27,6 +19,7 @@ struct LocalFileManager {
         }
     }
     
+    //save
     static func saveSession(_ session: RecordingSession) {
         guard let url = getFolderURL()?.appendingPathComponent("\(session.id).json") else { return }
         do {
@@ -51,6 +44,7 @@ struct LocalFileManager {
         }
     }
     
+    //delete
     static func deleteSession(id: UUID) {
         guard let url = getFolderURL()?.appendingPathComponent("\(id).json") else { return }
         try? FileManager.default.removeItem(at: url)

@@ -1,17 +1,9 @@
-//
-//  CSVManager.swift
-//  LootsDisplay
-//
-//  Created by Nat on 1/5/26.
-//
-
-
 import Foundation
 import UIKit
 
 struct CSVManager {
     
-    /// Exports multiple sessions
+    //bulk save
     static func exportSessionsAsCSV(_ selectedSessions: [RecordingSession]) {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("BulkExport_\(UUID().uuidString.prefix(6))")
         
@@ -34,7 +26,7 @@ struct CSVManager {
         }
     }
     
-    /// Exports a single session
+    //single save
     static func exportSingleSessionAsCSV(_ session: RecordingSession) {
         let csvString = generateCSVString(for: session)
         
@@ -57,13 +49,12 @@ struct CSVManager {
             fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
             let dateString = fileDateFormatter.string(from: session.startTime)
             
-            //Unique ID
             let uniqueID = session.id.uuidString.prefix(4)
             
             return "\(cleanLabel)_\(dateString)_\(uniqueID).csv"
         }
 
-    /// Converts a RecordingSession into a raw CSV String
+    //Convert recording session into csv string
     static func generateCSVString(for session: RecordingSession) -> String {
         var csvString = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
         let isoFormatter = ISO8601DateFormatter()
@@ -85,7 +76,7 @@ struct CSVManager {
         return csvString
     }
     
-    /// Helper to present the iOS Share Sheet
+    //iOS share sheet helper
     private static func share(items: [Any]) {
         DispatchQueue.main.async {
             let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)

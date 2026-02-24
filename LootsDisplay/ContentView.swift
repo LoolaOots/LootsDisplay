@@ -16,9 +16,10 @@ struct ContentView: View {
                         isActive: $sensors.navigateToHistory
                     ) { EmptyView() }
                     
+                    //Recording settings
                     List {
                         Section(header: Text("Recording Controls")) {
-                            // Recording Status
+                            //Recording status
                             HStack {
                                 Circle()
                                     .fill(sensors.isRecording ? Color.red : Color.gray)
@@ -40,7 +41,7 @@ struct ContentView: View {
                                 }
                             }
                             
-                            // Expandable Duration slider
+                            //Recording limit button
                             Button(action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                     isDurationExpanded.toggle()
@@ -51,7 +52,6 @@ struct ContentView: View {
                                         .foregroundColor(.primary)
                                     Spacer()
                                     Text("\(sensors.recordingLimit)s")
-                                    //.foregroundColor(.blue)
                                         .bold()
                                     Image(systemName: "chevron.right")
                                         .font(.caption2.bold())
@@ -61,7 +61,7 @@ struct ContentView: View {
                             }
                             .disabled(sensors.isRecording)
                             
-                            // Recording duration slider (Hidden when collapsed)
+                            //Recording duration slider when expanded
                             if isDurationExpanded && !sensors.isRecording {
                                 VStack(spacing: 15) {
                                     Slider(value: Binding(
@@ -80,7 +80,7 @@ struct ContentView: View {
                                 .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
                             }
                             
-                            // Delay Button
+                            //Recording delay button
                             Button(action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                     isDelayExpanded.toggle()
@@ -99,9 +99,9 @@ struct ContentView: View {
                             }
                             .disabled(sensors.isRecording)
                             
-                            // Delay Picker if not recording
+                            //Recording delay selection when expanded
                             if isDelayExpanded && !sensors.isRecording {
-                                HStack(spacing: 0) { // Set spacing to 0 because maxWidth: .infinity handles the gaps
+                                HStack(spacing: 0) {
                                     ForEach(delayOptions, id: \.self) { option in
                                         Button(action: {
                                             sensors.recordingDelay = option
@@ -111,16 +111,18 @@ struct ContentView: View {
                                                 .fontWeight(sensors.recordingDelay == option ? .bold : .regular)
                                                 .foregroundColor(sensors.recordingDelay == option ? .blue : .secondary)
                                                 .frame(maxWidth: .infinity)
-                                                .padding(.vertical, 10) // Makes the tap area taller and easier to hit
-                                                .contentShape(Rectangle()) // Essential: makes the whole area tappable
+                                                .padding(.vertical, 10)
+                                                .contentShape(Rectangle())
                                         }
-                                        .buttonStyle(PlainButtonStyle()) // Prevents the List from highlighting the whole row
+                                        .buttonStyle(PlainButtonStyle())
                                     }
                                 }
                                 .padding(.vertical, 4)
                                 .transition(.opacity)
                             }
                         }
+                        
+                        //Live view data
                         
                         Section(header: Text("Motion & Attitude")) {
                             SensorRow(label: "Pitch", value: String(format: "%.2f°", sensors.attitude.pitch * 180 / .pi))
@@ -158,6 +160,7 @@ struct ContentView: View {
                         }
                     }
                     
+                    //Bottom buttons
                     VStack(spacing: 12) {
                         //Start/Stop button
                         Button(action: { handleStartStop() }) {
@@ -170,7 +173,7 @@ struct ContentView: View {
                                 .cornerRadius(10)
                         }
                         
-                        // View Recorded Data Button
+                        //Recorded data button
                         NavigationLink(destination: DataHistoryView(sensors: sensors)) {
                             Text("VIEW RECORDED DATA")
                                 .font(.headline)
@@ -183,15 +186,15 @@ struct ContentView: View {
                         .disabled(sensors.sessions.isEmpty)
                     }
                     .padding()
-                } //End of VStack
-                //Overlay
+                }
+                
+                //Recording delay overlay
                 if sensors.isCountingDown {
                     ZStack {
-                        // Darken the background
                         Color.black.opacity(0.6)
                             .ignoresSafeArea()
                         
-                        // Big Countdown Text
+                        //countdown text
                         VStack(spacing: 20) {
                             Text("\(sensors.countdownRemaining)")
                                 .font(.system(size: 120, weight: .bold, design: .rounded))
@@ -203,7 +206,7 @@ struct ContentView: View {
                     .transition(.opacity)
                     .zIndex(1)
                 }
-            } //End ZStack
+            }
             .navigationTitle("Live Sensor Data")
             .onAppear { sensors.startAllSensors() }
             .alert("Recording Limit Reached", isPresented: $sensors.showLimitAlert) {
@@ -264,23 +267,6 @@ struct ContentView: View {
         } else {
             return .blue 
         }
-    }
-}
-
-@ViewBuilder
-func calibrationStatusView(accuracy: Int) -> some View {
-    let status: (text: String, color: Color) = {
-        switch accuracy {
-        case 2:  return ("Calibrated", .green)
-        case 1:  return ("Low Accuracy", .yellow)
-        case 0:  return ("Needs Calibration", .orange)
-        default: return ("Not Ready", .red)
-        }
-    }()
-    
-    HStack(spacing: 4) {
-        Circle().fill(status.color).frame(width: 6, height: 6)
-        Text(status.text).font(.caption2).foregroundColor(status.color)
     }
 }
 
