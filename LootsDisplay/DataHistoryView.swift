@@ -2,12 +2,9 @@ import SwiftUI
 
 struct DataHistoryView: View {
     @ObservedObject var sensors: SensorManager
-    //items are selected by their ID
     @State private var selectedSessionIDs = Set<UUID>()
-    //selection mode
     @State private var editMode: EditMode = .inactive
     
-    //label
     @State private var showingLabelAlert = false
     @State private var tempLabelText = ""
     @State private var sessionsToLabel: [RecordingSession] = []
@@ -39,18 +36,13 @@ struct DataHistoryView: View {
             )
         }
         .onChange(of: tempLabelText) { newValue in
-            // Strip illegal characters
             let filtered = newValue.components(separatedBy: illegalCharacters).joined()
-            
-            // length limit
             if filtered.count > maxLabelLength {
                 tempLabelText = String(filtered.prefix(maxLabelLength))
             } else if filtered != newValue {
-                //Update only if character removed
                 tempLabelText = filtered
             }
         }
-        
     }
 
     private var historyList: some View {
@@ -129,12 +121,38 @@ struct DataHistoryView: View {
         }
     }
 
+    
     @ToolbarContentBuilder
     private var bottomToolbarItems: some ToolbarContent {
-        ToolbarItemGroup(placement: .bottomBar) {
-            if editMode == .active {
-                renderBottomBarButtons()
+        ToolbarItem(placement: .bottomBar) {
+            Button(role: .destructive) {
+                deleteSelected()
+            } label: {
+                Image(systemName: "trash")
+                    .font(.title3)
             }
+            .tint(.red)
+            .disabled(selectedSessionIDs.isEmpty)
+        }
+
+        ToolbarItem(placement: .bottomBar) {
+            Text(selectedSessionIDs.isEmpty ? "Select Samples" : "\(selectedSessionIDs.count) Selected")
+                .font(.headline)
+                .foregroundColor(.primary)
+                .fixedSize()
+                .transition(.scale.combined(with: .opacity))
+        }
+
+        ToolbarItemGroup(placement: .bottomBar) {
+            Button("Save", systemImage: "square.and.arrow.down") {
+                bulkSaveCSV()
+            }
+            .disabled(selectedSessionIDs.isEmpty)
+            Button("Label", systemImage: "tag") {
+                sessionsToLabel = sensors.sessions.filter { selectedSessionIDs.contains($0.id) }
+                showingLabelAlert = true
+            }
+            .disabled(selectedSessionIDs.isEmpty)
         }
     }
     
@@ -150,61 +168,14 @@ struct DataHistoryView: View {
         editMode = .inactive
     }
 
-    
-    
     private func bulkSaveCSV() {
         let selectedSessions = sensors.sessions.filter { selectedSessionIDs.contains($0.id) }
         guard !selectedSessions.isEmpty else { return }
-
-        // If only one is selected, just use the normal save
         if selectedSessions.count == 1 {
             CSVManager.exportSingleSessionAsCSV(selectedSessions[0])
             return
         }
-
         CSVManager.exportSessionsAsCSV(selectedSessions)
-    }
-    
-    @ViewBuilder
-    private func renderBottomBarButtons() -> some View {
-        // Bottom Left: Trash
-        Button(role: .destructive) {
-            deleteSelected()
-        } label: {
-            Image(systemName: "trash")
-                .font(.title3) // Makes the icon larger
-        }
-        .tint(.red)
-        .disabled(selectedSessionIDs.isEmpty)
-
-        Spacer()
-
-        // Count Text
-        Text(selectedSessionIDs.isEmpty ? "Select Samples" : "\(selectedSessionIDs.count) Selected")
-            .font(.headline)
-            .foregroundColor(.primary)
-            .transition(.scale.combined(with: .opacity))
-
-        Spacer()
-
-        // Bottom Right: More Menu (...)
-        Menu {
-            Button {
-                bulkSaveCSV() // Our CSV logic
-            } label: {
-                Label("Save", systemImage: "square.and.arrow.down")
-            }
-            Button {
-                sessionsToLabel = sensors.sessions.filter { selectedSessionIDs.contains($0.id) }
-                showingLabelAlert = true
-            } label: {
-                Label("Label", systemImage: "tag.stack")
-            }
-        } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.title3) // Makes the icon larger
-        }
-        .disabled(selectedSessionIDs.isEmpty)
     }
 }
 
@@ -215,7 +186,8 @@ struct SessionRowView: View {
     @Binding var sessionsToLabel: [RecordingSession]
     @Binding var showingLabelAlert: Bool
 
-    // Efficiently find the first label assigned to this session
+    @State private var showingActionSheet = false
+
     private var sessionLabel: String? {
         session.frames.first(where: { $0.label != nil && !$0.label!.isEmpty })?.label
     }
@@ -223,7 +195,6 @@ struct SessionRowView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                // Date Title + Label Tag
                 HStack(alignment: .center, spacing: 8) {
                     Text(session.title)
                         .font(.system(.headline))
@@ -234,7 +205,6 @@ struct SessionRowView: View {
                     }
                 }
                 
-                // Subheadline
                 Text("\(session.frames.count) frames captured")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -242,24 +212,72 @@ struct SessionRowView: View {
             
             Spacer()
             
-            // Interaction logic
             if editMode?.wrappedValue == .inactive {
-                rowActionMenu
-                
+                //... menu single selection
+                Button {
+                    showingActionSheet = true
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                        .padding(8)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showingActionSheet) {
+                    VStack(spacing: 0) {
+                        Button {
+                            CSVManager.exportSingleSessionAsCSV(session)
+                            showingActionSheet = false
+                        } label: {
+                            HStack {
+                                Image(systemName: "square.and.arrow.down")
+                                Text("Save")
+                                Spacer()
+                            }
+                            .padding()
+                        }
+                        Button {
+                            sessionsToLabel = [session]
+                            showingLabelAlert = true
+                            showingActionSheet = false
+                        } label: {
+                            HStack {
+                                Image(systemName: "tag")
+                                Text("Label")
+                                Spacer()
+                            }
+                            .padding()
+                        }
+                        Button(role: .destructive) {
+                            if let index = sensors.sessions.firstIndex(where: { $0.id == session.id }) {
+                                sensors.deleteSession(at: IndexSet(integer: index))
+                            }
+                            showingActionSheet = false
+                        } label: {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Delete")
+                                Spacer()
+                            }
+                            .padding()
+                        }
+                    }
+                    .frame(minWidth: 180)
+                    .padding(.horizontal, 8)
+                    .presentationCompactAdaptation(.popover)
+                }
                 Image(systemName: "chevron.right")
                     .font(.caption.bold())
                     .foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 4)
-        // Ensure that tapping the row goes to the graph ONLY when not selecting
         .background(
             NavigationLink("", destination: SensorGraphView(session: session))
                 .opacity(0)
         )
     }
 
-    // tag UI
     @ViewBuilder
     private func labelTag(_ text: String) -> some View {
         HStack(spacing: 3) {
@@ -272,37 +290,6 @@ struct SessionRowView: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background(Capsule().fill(Color.blue))
-        .fixedSize() // Prevents the tag from squishing
-    }
-    
-    //... menu
-    private var rowActionMenu: some View {
-        Menu {
-            Button {
-                CSVManager.exportSingleSessionAsCSV(session)
-            } label: {
-                Label("Save", systemImage: "square.and.arrow.down")
-            }
-            
-            Button {
-                sessionsToLabel = [session]
-                showingLabelAlert = true
-            } label: {
-                Label("Label", systemImage: "tag")
-            }
-            
-            Button(role: .destructive) {
-                if let index = sensors.sessions.firstIndex(where: { $0.id == session.id }) {
-                    sensors.deleteSession(at: IndexSet(integer: index))
-                }
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.title2)
-                .foregroundColor(.blue)
-                .padding(8)
-        }
+        .fixedSize()
     }
 }

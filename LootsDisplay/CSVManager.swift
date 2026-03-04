@@ -1,17 +1,9 @@
-//
-//  CSVManager.swift
-//  LootsDisplay
-//
-//  Created by Nat on 1/5/26.
-//
-
-
 import Foundation
 import UIKit
 
 struct CSVManager {
     
-    /// Exports multiple sessions
+    //bulk save
     static func exportSessionsAsCSV(_ selectedSessions: [RecordingSession]) {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("BulkExport_\(UUID().uuidString.prefix(6))")
         
@@ -34,7 +26,7 @@ struct CSVManager {
         }
     }
     
-    /// Exports a single session
+    //single save
     static func exportSingleSessionAsCSV(_ session: RecordingSession) {
         let csvString = generateCSVString(for: session)
         
@@ -57,33 +49,33 @@ struct CSVManager {
             fileDateFormatter.dateFormat = "yyyy-MM-dd_HHmmss"
             let dateString = fileDateFormatter.string(from: session.startTime)
             
-            //Unique ID
             let uniqueID = session.id.uuidString.prefix(4)
             
             return "\(cleanLabel)_\(dateString)_\(uniqueID).csv"
         }
 
-    /// Converts a RecordingSession into a raw CSV String
+    //Convert recording session into csv string
     static func generateCSVString(for session: RecordingSession) -> String {
-        //Is Sensor Connected
+        var csvString = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
+        let isoFormatter = ISO8601DateFormatter()
+        //is WitMotion Sensor Connected
         let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
-        var header = "Timestamp,Label,Pitch,Roll,Yaw,Lat,Lon,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ"
-        
         if sensorConnected {
-            header += ",WIT_AccX,WIT_AccY,WIT_AccZ,WIT_Roll,WIT_Pitch,WIT_Yaw"
+            csvString += ",WIT_AccX,WIT_AccY,WIT_AccZ,WIT_Roll,WIT_Pitch,WIT_Yaw"
         }
         
-        var csvString = header + "\n"
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
-
         for frame in session.frames {
-            let timestamp = formatter.string(from: frame.timestamp)
-            let label = frame.label ?? ""
-
-            var row = "\(timestamp),\(label),\(frame.pitch),\(frame.roll),\(frame.yaw),\(frame.latitude),\(frame.longitude),\(frame.speed),\(frame.accelX),\(frame.accelY),\(frame.accelZ),\(frame.gForceX),\(frame.gForceY),\(frame.gForceZ)"
-            
+            var row = [
+                isoFormatter.string(from: frame.timestamp),
+                "\(frame.label ?? "")",
+                "\(frame.pitch)", "\(frame.roll)", "\(frame.yaw)",
+                "\(frame.latitude)", "\(frame.longitude)", "\(frame.pressure)",
+                "\(frame.heading)", "\(frame.speed)",
+                "\(frame.accelX)", "\(frame.accelY)", "\(frame.accelZ)",
+                "\(frame.gForceX)", "\(frame.gForceY)", "\(frame.gForceZ)",
+                "\(frame.gyroX)", "\(frame.gyroY)", "\(frame.gyroZ)",
+                "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)"
+            ].joined(separator: ",")
             if sensorConnected {
                 let wAx = String(format: "%.4f", frame.witAccX ?? 0.0)
                 let wAy = String(format: "%.4f", frame.witAccY ?? 0.0)
@@ -94,14 +86,12 @@ struct CSVManager {
                 
                 row += ",\(wAx),\(wAy),\(wAz),\(wR),\(wP),\(wY)"
             }
-            
             csvString.append(row + "\n")
         }
-        
         return csvString
     }
     
-    /// Helper to present the iOS Share Sheet
+    //iOS share sheet helper
     private static func share(items: [Any]) {
         DispatchQueue.main.async {
             let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)

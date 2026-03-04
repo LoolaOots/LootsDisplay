@@ -68,7 +68,7 @@ struct SensorGraphView: View {
                 //Session Info
                 Section {
                     HStack(alignment: .center, spacing: 10) {
-                        // The Date/Time Title
+                        //Date/Time Title
                         Text(session.title)
                             .font(.headline)
                             .lineLimit(1)
@@ -94,7 +94,7 @@ struct SensorGraphView: View {
                 Section {
                     Chart {
                         ForEach(Array(session.frames.enumerated()), id: \.offset) { index, frame in
-                            // Attitude
+                            //Attitude
                             if selectedTypes.contains(.pitch) {
                                 LineMark(x: .value("Time", index), y: .value("Pitch", frame.pitch * 180 / .pi))
                                     .foregroundStyle(by: .value("Series", "Pitch"))
@@ -112,7 +112,7 @@ struct SensorGraphView: View {
                                     .foregroundStyle(by: .value("Series", "Yaw"))
                             }
                                     
-                            // Gyroscope (Rotation Rate)
+                            //Gyroscope
                             if selectedTypes.contains(.gyroX) {
                                 LineMark(x: .value("Time", index), y: .value("Gyro X", frame.gyroX))
                                     .foregroundStyle(by: .value("Series", "Gyro X"))
@@ -126,7 +126,7 @@ struct SensorGraphView: View {
                                     .foregroundStyle(by: .value("Series", "Gyro Z"))
                             }
                             
-                            // Magnetometer
+                            //Magnetometer
                             if selectedTypes.contains(.magX) {
                                 LineMark(x: .value("Time", index), y: .value("Mag X", frame.magX))
                                     .foregroundStyle(by: .value("Series", "Mag X"))
@@ -140,7 +140,7 @@ struct SensorGraphView: View {
                                     .foregroundStyle(by: .value("Series", "Mag Z"))
                             }
                             
-                            // User Acceleration
+                            //User Acceleration
                             if selectedTypes.contains(.accelX) {
                                 LineMark(x: .value("Time", index), y: .value("Accel X", frame.accelX))
                                     .foregroundStyle(by: .value("Series", "Accel X"))
@@ -154,7 +154,7 @@ struct SensorGraphView: View {
                                     .foregroundStyle(by: .value("Series", "Accel Z"))
                             }
                             
-                            // G-Force
+                            //G-Force
                             if selectedTypes.contains(.gForceX) {
                                 LineMark(x: .value("Time", index), y: .value("G-Force X", frame.gForceX))
                                     .foregroundStyle(by: .value("Series", "G-Force X"))
@@ -168,7 +168,7 @@ struct SensorGraphView: View {
                                     .foregroundStyle(by: .value("Series", "G-Force Z"))
                             }
                             
-                            // Environment
+                            //Environment
                             if selectedTypes.contains(.speed) {
                                 LineMark(x: .value("Time", index), y: .value("Speed", frame.speed * 2.237))
                                     .foregroundStyle(by: .value("Series", "Speed"))

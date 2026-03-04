@@ -16,14 +16,12 @@ struct WT901DataView: View {
     var body: some View {
         List {
             Section("Live Sensor Stream") {
-                // Changed wtAccelX to accX
                 SensorRow(label: "Acceleration X", value: String(format: "%.2f g", manager.accX))
                 SensorRow(label: "Acceleration Y", value: String(format: "%.2f g", manager.accY))
                 SensorRow(label: "Acceleration Z", value: String(format: "%.2f g", manager.accZ))
             }
 
             Section("Attitude (Euler)") {
-                // Changed wtRoll/Pitch/Yaw to angleX/Y/Z
                 SensorRow(label: "Roll", value: String(format: "%.1f°", manager.angleX))
                 SensorRow(label: "Pitch", value: String(format: "%.1f°", manager.angleY))
                 SensorRow(label: "Yaw", value: String(format: "%.1f°", manager.angleZ))

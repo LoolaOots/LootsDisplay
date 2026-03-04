@@ -1,10 +1,3 @@
-////
-////  SensorManager.swift
-////  LootsDisplay
-////
-////  Created by Nat on 12/28/25.
-////
-
 import Foundation
 import CoreMotion
 import CoreLocation
@@ -13,7 +6,7 @@ import UIKit
 
 struct SensorFrame: Codable {
     let timestamp: Date
-    var label: String?
+    let label: String?
     
     let pitch: Double
     let roll: Double
@@ -24,23 +17,22 @@ struct SensorFrame: Codable {
     let pressure: Double
     let heading: Double
     let speed: Double
-    // User Acceleration
+    //User Acceleration
     let accelX: Double
     let accelY: Double
     let accelZ: Double
-    // Total G-Force (Total Accel)
+    //G-Force
     let gForceX: Double
     let gForceY: Double
     let gForceZ: Double
-    // Gyroscope (Rotation Rate)
+    //Gyroscope
     let gyroX: Double
     let gyroY: Double
     let gyroZ: Double
-    // Magnetometer (Calibrated Magnetic Field)
+    //Magnetometer
     let magX: Double
     let magY: Double
     let magZ: Double
-    
     // WIT Motion Sensor Data
     let witAccX: Double?
     let witAccY: Double?
@@ -48,10 +40,6 @@ struct SensorFrame: Codable {
     let witRoll: Double?
     let witPitch: Double?
     let witYaw: Double?
-    
-    mutating func updateLabel(_ newLabel: String) {
-        self.label = newLabel
-    }
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -90,16 +78,22 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var magX: Double = 0.0
     @Published var magY: Double = 0.0
     @Published var magZ: Double = 0.0
-    @Published var magAccuracy: Int = -1
     
     // Recording State
     @Published var isRecording = false
     @Published var recordedData: [SensorFrame] = []
-    @Published var secondsElapsed = 0 // Track the recording duration
+    @Published var secondsElapsed = 0 //Track recording duration
     //Persistent data via UserDefaults
     @Published var recordingLimit: Int {
         didSet {
             UserDefaults.standard.set(recordingLimit, forKey: limitKey) //get user set recording duration or use default
+        }
+    }
+    @Published var isCountingDown = false
+    @Published var countdownRemaining = 0 //Track countdown duration
+    @Published var recordingDelay: Int {
+        didSet {
+            UserDefaults.standard.set(recordingDelay, forKey: "recordingDelay")
         }
     }
     
@@ -107,16 +101,17 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var sessions: [RecordingSession] = []
     
     //Maximum recordings
-    @Published var showLimitAlert = false // For the "Max Reached" popup
+    @Published var showLimitAlert = false //max recording limit reached alert
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
-    private var recordedHistoryLimit = 10
+    var recordedHistoryLimit = 10
     
     private var recordingTimer: Timer?
-    private var secondsTimer: Timer? // Timer for the UI counter
+    private var secondsTimer: Timer? //Timer for the UI counter
     
     override init() {
         let savedLimit = UserDefaults.standard.integer(forKey: limitKey)
         self.recordingLimit = savedLimit > 0 ? savedLimit : 45
+        self.recordingDelay = UserDefaults.standard.integer(forKey: "recordingDelay")
         super.init()
         LocalFileManager.setupFolder()
         self.sessions = LocalFileManager.loadSessions()
@@ -125,7 +120,6 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.requestWhenInUseAuthorization()
     }
 
-    // Toggle Recording
     func toggleRecording() {
         if isRecording {
             stopRecording()
@@ -157,12 +151,12 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    private func stopRecording() {
+    func stopRecording() {
         isRecording = false
         recordingTimer?.invalidate()
         secondsTimer?.invalidate()
         
-        // Save the finished recording as a session
+        //Save the finished recording as a session
         if !recordedData.isEmpty {
             let newSession = RecordingSession(startTime: Date().addingTimeInterval(-Double(secondsElapsed)), frames: recordedData)
             LocalFileManager.saveSession(newSession)
@@ -179,7 +173,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             let session = sessions[index]
             LocalFileManager.deleteSession(id: session.id)
         }
-        self.sessions = LocalFileManager.loadSessions() // Refresh list
+        self.sessions = LocalFileManager.loadSessions() //Refresh list
         DispatchQueue.main.async {
             self.recordedData = []
             self.secondsElapsed = 0
@@ -198,30 +192,36 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func startAllSensors(with btManager: BluetoothManager) {
+        //live view for magnetometer
+        if motionManager.isMagnetometerAvailable {
+                motionManager.magnetometerUpdateInterval = 0.1
+                motionManager.startMagnetometerUpdates(to: .main) { data, _ in
+                    guard let magData = data else { return }
+                    self.magX = magData.magneticField.x
+                    self.magY = magData.magneticField.y
+                    self.magZ = magData.magneticField.z
+                }
+            }
+        
+        //live view for motion data
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 0.1
             motionManager.startDeviceMotionUpdates(using: .xArbitraryZVertical, to: .main) { data, _ in
                 guard let motion = data else { return }
                 let toDegrees = 180.0 / .pi
-                
-                //Live view
+
                 self.acceleration = (motion.userAcceleration.x, motion.userAcceleration.y, motion.userAcceleration.z)
                 self.attitude = (motion.attitude.pitch, motion.attitude.roll, motion.attitude.yaw)
                 self.gyroX = motion.rotationRate.x * toDegrees
                 self.gyroY = motion.rotationRate.y * toDegrees
                 self.gyroZ = motion.rotationRate.z * toDegrees
-                self.magX = motion.magneticField.field.x
-                self.magY = motion.magneticField.field.y
-                self.magZ = motion.magneticField.field.z
-                self.magAccuracy = Int(motion.magneticField.accuracy.rawValue)
                 self.gForceX = motion.userAcceleration.x + motion.gravity.x
                 self.gForceY = motion.userAcceleration.y + motion.gravity.y
                 self.gForceZ = motion.userAcceleration.z + motion.gravity.z
-                //self.speed = self.locationManager.location?.speed ?? 0.0
                 let rawSpeed = self.locationManager.location?.speed ?? 0.0
                 self.speed = max(0.0, rawSpeed)
                 
-                // Capture data
+                // Capture data and save to sensor frame which becomes recording data
                 if self.isRecording {
                     let totalX = motion.userAcceleration.x + motion.gravity.x
                     let totalY = motion.userAcceleration.y + motion.gravity.y
@@ -247,9 +247,9 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         gyroX: motion.rotationRate.x * toDegrees,
                         gyroY: motion.rotationRate.y * toDegrees,
                         gyroZ: motion.rotationRate.z * toDegrees,
-                        magX: motion.magneticField.field.x,
-                        magY: motion.magneticField.field.y,
-                        magZ: motion.magneticField.field.z,
+                        magX: self.magX,
+                        magY: self.magY,
+                        magZ: self.magZ,
                         //WIT Sensor Data
                         witAccX: btManager.isConnected ? Double(btManager.accX) : nil,
                         witAccY: btManager.isConnected ? Double(btManager.accY) : nil,
@@ -284,19 +284,30 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         self.heading = newHeading.magneticHeading
     }
     
-    ///Add Label
     func applyLabelToSession(id: UUID, label: String) {
         if let index = sessions.firstIndex(where: { $0.id == id }) {
-            // Create a copy of the session
-            var updatedSession = sessions[index]
-            
-            // Use 'indices' to modify the frames directly in place
-            for i in updatedSession.frames.indices {
-                updatedSession.frames[i].updateLabel(label)
+            let updatedFrames = sessions[index].frames.map { frame in
+                SensorFrame(
+                    timestamp: frame.timestamp,
+                    label: label, //Apply new label
+                    pitch: frame.pitch, roll: frame.roll, yaw: frame.yaw,
+                    latitude: frame.latitude, longitude: frame.longitude,
+                    pressure: frame.pressure, heading: frame.heading, speed: frame.speed,
+                    accelX: frame.accelX, accelY: frame.accelY, accelZ: frame.accelZ,
+                    gForceX: frame.gForceX, gForceY: frame.gForceY, gForceZ: frame.gForceZ,
+                    gyroX: frame.gyroX, gyroY: frame.gyroY, gyroZ: frame.gyroZ,
+                    magX: frame.magX, magY: frame.magY, magZ: frame.magZ,
+                    witAccX: frame.witAccX, witAccY: frame.witAccY, witAccZ: frame.witAccZ,
+                    witRoll: frame.witRoll, witPitch: frame.witPitch, witYaw: frame.witYaw
+                )
             }
             
-            LabelManager.shared.saveLabelToHistory(label)
+            //adds label to existing recording data
+            var updatedSession = sessions[index]
+            updatedSession.frames = updatedFrames
             
+            LabelManager.shared.saveLabelToHistory(label)
+                    
             DispatchQueue.main.async {
                 self.sessions[index] = updatedSession
                 LocalFileManager.saveSession(updatedSession)
@@ -304,4 +315,3 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 }
-
