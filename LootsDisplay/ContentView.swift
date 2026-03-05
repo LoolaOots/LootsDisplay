@@ -172,7 +172,7 @@ struct ContentView: View {
                             } else {
                                 NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
                                     HStack {
-                                        Text("Find Sensors")
+                                        Text("Find WitMotion Sensor")
                                             .foregroundColor(.blue)
                                         Spacer()
                                         Image(systemName: "sensor")
