@@ -224,7 +224,7 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
                         advertisementData: [String: Any],
                         rssi: NSNumber) {
         if let name = peripheral.name, name.contains("WT901") {
-            if !discoveredDevices.contains(peripheral) {
+            if !discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
                 DispatchQueue.main.async { self.discoveredDevices.append(peripheral) }
             }
         }
