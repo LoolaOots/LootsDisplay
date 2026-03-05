@@ -31,6 +31,7 @@ struct WT901DataView: View {
             SensorRow(label: "Pitch", value: String(format: "%.2f°", manager.angleY))
             SensorRow(label: "Yaw",   value: String(format: "%.2f°", manager.angleZ))
         }
+        
         .navigationTitle(peripheral.name ?? "Streaming Sensor Data")
         .onAppear {
             manager.connect(to: peripheral)

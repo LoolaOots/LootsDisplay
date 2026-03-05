@@ -88,7 +88,7 @@ struct CSVManager {
 
     //WitMotion sensor header
     static func witCSVHeader() -> String {
-        return ",WIT_AccX,WIT_AccY,WIT_AccZ,WIT_Roll,WIT_Pitch,WIT_Yaw"
+        return ",WIT_AccX,WIT_AccY,WIT_AccZ,WIT_AsX,WIT_AsY,WIT_AsZ,WIT_Roll,WIT_Pitch,WIT_Yaw"
     }
 
     //WitMotion CSV Row
@@ -96,10 +96,13 @@ struct CSVManager {
         let wAx = String(format: "%.4f", frame.witAccX ?? 0.0)
         let wAy = String(format: "%.4f", frame.witAccY ?? 0.0)
         let wAz = String(format: "%.4f", frame.witAccZ ?? 0.0)
+        let wAsx = String(format: "%.4f", frame.witAsX ?? 0.0)
+        let wAsy = String(format: "%.4f", frame.witAsY ?? 0.0)
+        let wAsz = String(format: "%.4f", frame.witAsZ ?? 0.0)
         let wR  = String(format: "%.2f", frame.witRoll ?? 0.0)
         let wP  = String(format: "%.2f", frame.witPitch ?? 0.0)
         let wY  = String(format: "%.2f", frame.witYaw ?? 0.0)
-        return ",\(wAx),\(wAy),\(wAz),\(wR),\(wP),\(wY)"
+        return ",\(wAx),\(wAy),\(wAz),\(wAsx),\(wAsy),\(wAsz),\(wR),\(wP),\(wY)"
     }
     
     //iOS share sheet helper

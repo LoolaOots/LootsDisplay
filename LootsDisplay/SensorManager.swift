@@ -43,17 +43,6 @@ struct SensorFrame: Codable {
     let witAsX: Double?
     let witAsY: Double?
     let witAsZ: Double?
-//    let witHX: Double?
-//    let witHY: Double?
-//    let witHZ: Double?
-//    let witQ0: Double?
-//    let witQ1: Double?
-//    let witQ2: Double?
-//    let witQ3: Double?
-//    let witPressure: Double?
-//    let witHeight: Double?
-//    let witTemperature: Double?
-    //let witBatteryLevel: Double?
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -274,16 +263,6 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         witAsX: btManager.isConnected ? Double(btManager.asX) : nil,
                         witAsY: btManager.isConnected ? Double(btManager.asY) : nil,
                         witAsZ: btManager.isConnected ? Double(btManager.asZ) : nil
-//                        witHX: btManager.isConnected ? Double(btManager.hx) : nil,
-//                        witHY: btManager.isConnected ? Double(btManager.hy) : nil,
-//                        witHZ: btManager.isConnected ? Double(btManager.hz) : nil,
-//                        witQ0: btManager.isConnected ? Double(btManager.q0) : nil,
-//                        witQ1: btManager.isConnected ? Double(btManager.q1) : nil,
-//                        witQ2: btManager.isConnected ? Double(btManager.q2) : nil,
-//                        witQ3: btManager.isConnected ? Double(btManager.q3) : nil,
-//                        witPressure: btManager.isConnected ? Double(btManager.pressure) : nil,
-//                        witHeight: btManager.isConnected ? Double(btManager.height) : nil,
-//                        witTemperature: btManager.isConnected ? Double(btManager.temperature) : nil
                     )
                     self.recordedData.append(frame)
                 }
@@ -327,9 +306,6 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     witAccX: frame.witAccX, witAccY: frame.witAccY, witAccZ: frame.witAccZ,
                     witRoll: frame.witRoll, witPitch: frame.witPitch, witYaw: frame.witYaw,
                     witAsX: frame.witAsX, witAsY: frame.witAsY, witAsZ: frame.witAsZ
-//                    witHX: frame.witHX, witHY: frame.witHY, witHZ: frame.witHZ,
-//                    witQ0: frame.witQ0, witQ1: frame.witQ1, witQ2: frame.witQ2, witQ3: frame.witQ3,
-//                    witPressure: frame.witPressure, witHeight: frame.witHeight, witTemperature: frame.witTemperature
                 )
             }
             
