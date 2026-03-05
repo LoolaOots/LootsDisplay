@@ -25,6 +25,7 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
 
     private var receiveBuffer = Data()
     private let packetLength = 20
+    private var seenPeripheralIDs = Set<UUID>() //prevent duplicates
 
     override init() {
         super.init()
@@ -34,9 +35,10 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     func startScanning() {
         guard centralManager.state == .poweredOn else { return }
         discoveredDevices.removeAll()
+        seenPeripheralIDs.removeAll()
         centralManager.scanForPeripherals(withServices: nil, options: nil)
     }
-
+    
     func stopScanning() {
         centralManager?.stopScan()
         discoveredDevices.removeAll()
@@ -57,19 +59,6 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         if central.state == .poweredOn { startScanning() }
     }
 
-    func centralManager(_ central: CBCentralManager,
-                        didDiscover peripheral: CBPeripheral,
-                        advertisementData: [String: Any],
-                        rssi: NSNumber) {
-        if let name = peripheral.name, name.contains("WT901") {
-            DispatchQueue.main.async {
-                if !self.discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
-                    self.discoveredDevices.append(peripheral)
-                }
-            }
-        }
-    }
-
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected to \(peripheral.name ?? "device")")
         receiveBuffer.removeAll()
@@ -82,6 +71,19 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         if peripheral == connectedPeripheral {
             connectedPeripheral = nil
             receiveBuffer.removeAll()
+        }
+    }
+
+    func centralManager(_ central: CBCentralManager,
+                        didDiscover peripheral: CBPeripheral,
+                        advertisementData: [String: Any],
+                        rssi: NSNumber) {
+        if let name = peripheral.name, name.contains("WT901") {
+            DispatchQueue.main.async {
+                if !self.discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
+                    self.discoveredDevices.append(peripheral)
+                }
+            }
         }
     }
 
