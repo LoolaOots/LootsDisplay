@@ -56,14 +56,15 @@ struct CSVManager {
 
     //Convert recording session into csv string
     static func generateCSVString(for session: RecordingSession) -> String {
-        var csvString = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ\n"
-        let isoFormatter = ISO8601DateFormatter()
-        //is WitMotion Sensor Connected
         let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
+        let isoFormatter = ISO8601DateFormatter()
+
+        var header = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ"
         if sensorConnected {
-            csvString += ",WIT_AccX,WIT_AccY,WIT_AccZ,WIT_Roll,WIT_Pitch,WIT_Yaw"
+            header += witCSVHeader()
         }
-        
+        var csvString = header + "\n"
+
         for frame in session.frames {
             var row = [
                 isoFormatter.string(from: frame.timestamp),
@@ -76,19 +77,32 @@ struct CSVManager {
                 "\(frame.gyroX)", "\(frame.gyroY)", "\(frame.gyroZ)",
                 "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)"
             ].joined(separator: ",")
+
             if sensorConnected {
-                let wAx = String(format: "%.4f", frame.witAccX ?? 0.0)
-                let wAy = String(format: "%.4f", frame.witAccY ?? 0.0)
-                let wAz = String(format: "%.4f", frame.witAccZ ?? 0.0)
-                let wR = String(format: "%.2f", frame.witRoll ?? 0.0)
-                let wP = String(format: "%.2f", frame.witPitch ?? 0.0)
-                let wY = String(format: "%.2f", frame.witYaw ?? 0.0)
-                
-                row += ",\(wAx),\(wAy),\(wAz),\(wR),\(wP),\(wY)"
+                row += witCSVRow(for: frame)
             }
             csvString.append(row + "\n")
         }
         return csvString
+    }
+
+    //WitMotion sensor header
+    static func witCSVHeader() -> String {
+        return ",WIT_AccX,WIT_AccY,WIT_AccZ,WIT_AsX,WIT_AsY,WIT_AsZ,WIT_Roll,WIT_Pitch,WIT_Yaw"
+    }
+
+    //WitMotion CSV Row
+    static func witCSVRow(for frame: SensorFrame) -> String {
+        let wAx = String(format: "%.4f", frame.witAccX ?? 0.0)
+        let wAy = String(format: "%.4f", frame.witAccY ?? 0.0)
+        let wAz = String(format: "%.4f", frame.witAccZ ?? 0.0)
+        let wAsx = String(format: "%.4f", frame.witAsX ?? 0.0)
+        let wAsy = String(format: "%.4f", frame.witAsY ?? 0.0)
+        let wAsz = String(format: "%.4f", frame.witAsZ ?? 0.0)
+        let wR  = String(format: "%.2f", frame.witRoll ?? 0.0)
+        let wP  = String(format: "%.2f", frame.witPitch ?? 0.0)
+        let wY  = String(format: "%.2f", frame.witYaw ?? 0.0)
+        return ",\(wAx),\(wAy),\(wAz),\(wAsx),\(wAsy),\(wAsz),\(wR),\(wP),\(wY)"
     }
     
     //iOS share sheet helper

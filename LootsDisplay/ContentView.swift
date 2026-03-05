@@ -124,7 +124,6 @@ struct ContentView: View {
                         }
                         
                         //Live view data
-                        
                         Section(header: Text("Motion & Attitude")) {
                             SensorRow(label: "Pitch", value: String(format: "%.2f°", sensors.attitude.pitch * 180 / .pi))
                             SensorRow(label: "Roll", value: String(format: "%.2f°", sensors.attitude.roll * 180 / .pi))
@@ -198,17 +197,7 @@ struct ContentView: View {
                         }
                         
                         if btManager.isConnected {
-                            Section(header: Text("WIT Motion: Acceleration (G)")) {
-                                SensorRow(label: "WIT Accel X", value: String(format: "%.3f", btManager.accX))
-                                SensorRow(label: "WIT Accel Y", value: String(format: "%.3f", btManager.accY))
-                                SensorRow(label: "WIT Accel Z", value: String(format: "%.3f", btManager.accZ))
-                            }
-                            
-                            Section(header: Text("WIT Motion: Orientation")) {
-                                SensorRow(label: "WIT Roll", value: String(format: "%.2f°", btManager.angleX))
-                                SensorRow(label: "WIT Pitch", value: String(format: "%.2f°", btManager.angleY))
-                                SensorRow(label: "WIT Yaw", value: String(format: "%.2f°", btManager.angleZ))
-                            }
+                            WT901DataView(manager: btManager, peripheral: btManager.connectedPeripheral!)
                         }
                     }
                     

@@ -40,6 +40,9 @@ struct SensorFrame: Codable {
     let witRoll: Double?
     let witPitch: Double?
     let witYaw: Double?
+    let witAsX: Double?
+    let witAsY: Double?
+    let witAsZ: Double?
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -256,7 +259,10 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         witAccZ: btManager.isConnected ? Double(btManager.accZ) : nil,
                         witRoll: btManager.isConnected ? Double(btManager.angleX) : nil,
                         witPitch: btManager.isConnected ? Double(btManager.angleY) : nil,
-                        witYaw: btManager.isConnected ? Double(btManager.angleZ) : nil
+                        witYaw: btManager.isConnected ? Double(btManager.angleZ) : nil,
+                        witAsX: btManager.isConnected ? Double(btManager.asX) : nil,
+                        witAsY: btManager.isConnected ? Double(btManager.asY) : nil,
+                        witAsZ: btManager.isConnected ? Double(btManager.asZ) : nil
                     )
                     self.recordedData.append(frame)
                 }
@@ -298,7 +304,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     gyroX: frame.gyroX, gyroY: frame.gyroY, gyroZ: frame.gyroZ,
                     magX: frame.magX, magY: frame.magY, magZ: frame.magZ,
                     witAccX: frame.witAccX, witAccY: frame.witAccY, witAccZ: frame.witAccZ,
-                    witRoll: frame.witRoll, witPitch: frame.witPitch, witYaw: frame.witYaw
+                    witRoll: frame.witRoll, witPitch: frame.witPitch, witYaw: frame.witYaw,
+                    witAsX: frame.witAsX, witAsY: frame.witAsY, witAsZ: frame.witAsZ
                 )
             }
             
