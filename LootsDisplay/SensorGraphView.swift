@@ -12,6 +12,7 @@ enum SensorType: String, CaseIterable, Identifiable {
     //Sensor Data
     case witAccX = "WIT Accel X", witAccY = "WIT Accel Y", witAccZ = "WIT Accel Z"
     case witRoll = "WIT Roll", witPitch = "WIT Pitch", witYaw = "WIT Yaw"
+    case witAsX = "WIT AsX", witAsY = "WIT AsY", witAsZ = "WIT AsZ"
     
     var id: String { self.rawValue }
     
@@ -54,6 +55,9 @@ enum SensorType: String, CaseIterable, Identifiable {
         case .witRoll: return Color.purple.opacity(0.5)
         case .witPitch: return Color.yellow.opacity(0.5)
         case .witYaw: return Color.cyan.opacity(0.5)
+        case .witAsX: return Color.pink.opacity(0.5)
+        case .witAsY: return Color.mint.opacity(0.5)
+        case .witAsZ: return Color.teal.opacity(0.5)
         }
     }
 }
@@ -203,6 +207,18 @@ struct SensorGraphView: View {
                                 LineMark(x: .value("Time", index), y: .value("WIT Yaw", val))
                                     .foregroundStyle(by: .value("Series", "WIT Yaw"))
                             }
+                            if selectedTypes.contains(.witAsX), let val = frame.witAsX {
+                                LineMark(x: .value("Time", index), y: .value("WIT AsX", val))
+                                    .foregroundStyle(by: .value("Series", "WIT AsX"))
+                            }
+                            if selectedTypes.contains(.witAsY), let val = frame.witAsY {
+                                LineMark(x: .value("Time", index), y: .value("WIT AsY", val))
+                                    .foregroundStyle(by: .value("Series", "WIT AsY"))
+                            }
+                            if selectedTypes.contains(.witAsZ), let val = frame.witAsZ {
+                                LineMark(x: .value("Time", index), y: .value("WIT AsZ", val))
+                                    .foregroundStyle(by: .value("Series", "WIT AsZ"))
+                            }
                         }
                     }
                     .chartForegroundStyleScale(domain: SensorType.allCases.map { $0.rawValue },
@@ -229,7 +245,7 @@ struct SensorGraphView: View {
                     let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
                     if sensorConnected {
                         sensorToggleGroup(title: "External Sensor",
-                                          types: [.witAccX, .witAccY, .witAccZ, .witRoll, .witPitch, .witYaw])
+                                          types: [.witAccX, .witAccY, .witAccZ, .witRoll, .witPitch, .witYaw, .witAsX, .witAsY, .witAsZ])
                     }
                     
                 }
@@ -249,6 +265,7 @@ struct SensorGraphView: View {
         case .pressure: return "kPa"
         case .witAccX, .witAccY, .witAccZ: return "g"
         case .witRoll, .witPitch, .witYaw: return "°"
+        case .witAsX, .witAsY, .witAsZ: return "°/s"
         default: return ""
         }
     }

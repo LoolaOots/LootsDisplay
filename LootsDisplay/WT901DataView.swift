@@ -14,20 +14,24 @@ struct WT901DataView: View {
     var peripheral: CBPeripheral
     
     var body: some View {
-        List {
-            Section("Live Sensor Stream") {
-                SensorRow(label: "Acceleration X", value: String(format: "%.2f g", manager.accX))
-                SensorRow(label: "Acceleration Y", value: String(format: "%.2f g", manager.accY))
-                SensorRow(label: "Acceleration Z", value: String(format: "%.2f g", manager.accZ))
-            }
-
-            Section("Attitude (Euler)") {
-                SensorRow(label: "Roll", value: String(format: "%.1f°", manager.angleX))
-                SensorRow(label: "Pitch", value: String(format: "%.1f°", manager.angleY))
-                SensorRow(label: "Yaw", value: String(format: "%.1f°", manager.angleZ))
-            }
+        Section("Acceleration") {
+            SensorRow(label: "X", value: String(format: "%.3f g", manager.accX))
+            SensorRow(label: "Y", value: String(format: "%.3f g", manager.accY))
+            SensorRow(label: "Z", value: String(format: "%.3f g", manager.accZ))
         }
-        .navigationTitle(peripheral.name ?? "Streaming")
+
+        Section("Gyroscope") {
+            SensorRow(label: "X", value: String(format: "%.2f °/s", manager.asX))
+            SensorRow(label: "Y", value: String(format: "%.2f °/s", manager.asY))
+            SensorRow(label: "Z", value: String(format: "%.2f °/s", manager.asZ))
+        }
+
+        Section("Attitude") {
+            SensorRow(label: "Roll",  value: String(format: "%.2f°", manager.angleX))
+            SensorRow(label: "Pitch", value: String(format: "%.2f°", manager.angleY))
+            SensorRow(label: "Yaw",   value: String(format: "%.2f°", manager.angleZ))
+        }
+        .navigationTitle(peripheral.name ?? "Streaming Sensor Data")
         .onAppear {
             manager.connect(to: peripheral)
         }
