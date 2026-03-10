@@ -5,6 +5,10 @@ struct ContentView: View {
     @StateObject var btManager = BluetoothManager()
     @State private var isDurationExpanded = false
     @State private var isDelayExpanded = false
+    
+    //subscription
+    @State private var showPaywall = false
+    @ObservedObject var store = SubscriptionManager.shared
         
     let delayOptions = [0, 3, 5, 10]
 
@@ -159,45 +163,32 @@ struct ContentView: View {
                             SensorRow(label: "G-Force Z", value: String(format: "%.2f g", sensors.gForceZ))
                         }
                         
-                        //Sensor Data
-                        Section {
-                            if btManager.isConnected {
+                        //witmotion sensor data and paywall
+                        if store.isProUnlocked {
+                            NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
                                 HStack {
-                                    Image(systemName: "sensor.fill")
-                                        .foregroundColor(.green)
-                                    Text("Connected: \(btManager.connectedPeripheral?.name ?? "Unknown WT901")")
-                                        .fontWeight(.medium)
+                                    Text("Find WitMotion Sensor")
+                                        .foregroundColor(.blue)
                                     Spacer()
-                                }
-                            } else {
-                                NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
-                                    HStack {
-                                        Text("Find WitMotion Sensor")
-                                            .foregroundColor(.blue)
-                                        Spacer()
-                                        Image(systemName: "sensor")
-                                            .foregroundColor(.secondary)
-                                    }
+                                    Image(systemName: "sensor")
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            
-                            if btManager.isConnected {
-                                Section {
-                                    Button(role: .destructive) {
-                                        btManager.disconnect()
-                                    } label: {
-                                        Text("Disconnect Sensor")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                    }
+                        } else {
+                            Button {
+                                showPaywall = true
+                            } label: {
+                                HStack {
+                                    Text("Find WitMotion Sensor")
+                                        .foregroundColor(.blue)
+                                    Spacer()
+                                    Image(systemName: "lock.fill")
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            
-                        } header: {
-                            Text("External Sensor")
-                        }
-                        
-                        if btManager.isConnected {
-                            WT901DataView(manager: btManager, peripheral: btManager.connectedPeripheral!)
+                            .sheet(isPresented: $showPaywall) {
+                                PaywallView()
+                            }
                         }
                     }
                     

@@ -244,7 +244,7 @@ struct SensorGraphView: View {
                     //Sensor Data
                     let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
                     if sensorConnected {
-                        sensorToggleGroup(title: "External Sensor",
+                        sensorToggleGroup(title: "WitMotion Sensor",
                                           types: [.witAccX, .witAccY, .witAccZ, .witRoll, .witPitch, .witYaw, .witAsX, .witAsY, .witAsZ])
                     }
                     
