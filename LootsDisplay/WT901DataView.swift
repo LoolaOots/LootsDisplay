@@ -1,11 +1,3 @@
-//
-//  WT901DataView.swift
-//  LootsDisplay
-//
-//  Created by Nat on 1/2/26.
-//
-
-
 import SwiftUI
 import CoreBluetooth
 
