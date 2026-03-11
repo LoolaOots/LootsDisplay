@@ -106,7 +106,11 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     //Maximum recordings
     @Published var showLimitAlert = false //max recording limit reached alert
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
-    var recordedHistoryLimit = 10
+    var recordedHistoryLimit: Int {
+        MainActor.assumeIsolated {
+            SubscriptionManager.shared.isProUnlocked ? 30 : 10
+        }
+    }//pro members get 30 files saved, free users get 10
     
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? //Timer for the UI counter

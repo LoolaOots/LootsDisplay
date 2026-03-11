@@ -50,6 +50,7 @@ struct BluetoothDeviceView: View {
         }
         .navigationTitle("Find Sensor")
         .onAppear {
+            btManager.requestBluetoothAccess()
             btManager.startScanning()
         }
         .onDisappear {
