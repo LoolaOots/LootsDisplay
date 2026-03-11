@@ -33,6 +33,16 @@ struct SensorFrame: Codable {
     let magX: Double
     let magY: Double
     let magZ: Double
+    // WIT Motion Sensor Data
+    let witAccX: Double?
+    let witAccY: Double?
+    let witAccZ: Double?
+    let witRoll: Double?
+    let witPitch: Double?
+    let witYaw: Double?
+    let witAsX: Double?
+    let witAsY: Double?
+    let witAsZ: Double?
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -96,7 +106,11 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     //Maximum recordings
     @Published var showLimitAlert = false //max recording limit reached alert
     @Published var navigateToHistory = false //navigates to datahistoryview if recording limit is reached
-    var recordedHistoryLimit = 10
+    var recordedHistoryLimit: Int {
+        MainActor.assumeIsolated {
+            SubscriptionManager.shared.isProUnlocked ? 30 : 10
+        }
+    }//pro members get 30 files saved, free users get 10
     
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? //Timer for the UI counter
@@ -184,7 +198,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
-    func startAllSensors() {
+    func startAllSensors(with btManager: BluetoothManager) {
         //live view for magnetometer
         if motionManager.isMagnetometerAvailable {
                 motionManager.magnetometerUpdateInterval = 0.1
@@ -242,7 +256,17 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         gyroZ: motion.rotationRate.z * toDegrees,
                         magX: self.magX,
                         magY: self.magY,
-                        magZ: self.magZ
+                        magZ: self.magZ,
+                        //WIT Sensor Data
+                        witAccX: btManager.isConnected ? Double(btManager.accX) : nil,
+                        witAccY: btManager.isConnected ? Double(btManager.accY) : nil,
+                        witAccZ: btManager.isConnected ? Double(btManager.accZ) : nil,
+                        witRoll: btManager.isConnected ? Double(btManager.angleX) : nil,
+                        witPitch: btManager.isConnected ? Double(btManager.angleY) : nil,
+                        witYaw: btManager.isConnected ? Double(btManager.angleZ) : nil,
+                        witAsX: btManager.isConnected ? Double(btManager.asX) : nil,
+                        witAsY: btManager.isConnected ? Double(btManager.asY) : nil,
+                        witAsZ: btManager.isConnected ? Double(btManager.asZ) : nil
                     )
                     self.recordedData.append(frame)
                 }
@@ -282,7 +306,10 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     accelX: frame.accelX, accelY: frame.accelY, accelZ: frame.accelZ,
                     gForceX: frame.gForceX, gForceY: frame.gForceY, gForceZ: frame.gForceZ,
                     gyroX: frame.gyroX, gyroY: frame.gyroY, gyroZ: frame.gyroZ,
-                    magX: frame.magX, magY: frame.magY, magZ: frame.magZ
+                    magX: frame.magX, magY: frame.magY, magZ: frame.magZ,
+                    witAccX: frame.witAccX, witAccY: frame.witAccY, witAccZ: frame.witAccZ,
+                    witRoll: frame.witRoll, witPitch: frame.witPitch, witYaw: frame.witYaw,
+                    witAsX: frame.witAsX, witAsY: frame.witAsY, witAsZ: frame.witAsZ
                 )
             }
             
@@ -299,4 +326,3 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 }
-

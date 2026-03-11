@@ -2,8 +2,13 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var sensors = SensorManager()
+    @StateObject var btManager = BluetoothManager()
     @State private var isDurationExpanded = false
     @State private var isDelayExpanded = false
+    
+    //subscription
+    @State private var showPaywall = false
+    @ObservedObject var store = SubscriptionManager.shared
         
     let delayOptions = [0, 3, 5, 10]
 
@@ -67,7 +72,7 @@ struct ContentView: View {
                                     Slider(value: Binding(
                                         get: { Double(sensors.recordingLimit) },
                                         set: { sensors.recordingLimit = Int($0) }
-                                    ), in: 1...60, step: 1.0)
+                                    ), in: 1...Double(store.isProUnlocked ? 180 : 60), step: 1.0) //pro members get 180s, free users get 60s
                                     .accentColor(.blue)
                                     .scaleEffect(0.95)
                                     
@@ -122,42 +127,61 @@ struct ContentView: View {
                             }
                         }
                         
-                        //Live view data
-                        
-                        Section(header: Text("Motion & Attitude")) {
-                            SensorRow(label: "Pitch", value: String(format: "%.2f°", sensors.attitude.pitch * 180 / .pi))
-                            SensorRow(label: "Roll", value: String(format: "%.2f°", sensors.attitude.roll * 180 / .pi))
-                            SensorRow(label: "Yaw", value: String(format: "%.2f°", sensors.attitude.yaw * 180 / .pi))
-                            SensorRow(label: "Accel X", value: String(format: "%.3f g", sensors.acceleration.x))
-                            SensorRow(label: "Accel Y", value: String(format: "%.3f g", sensors.acceleration.y))
-                            SensorRow(label: "Accel Z", value: String(format: "%.3f g", sensors.acceleration.z))
+                        //witmotion sensor data
+                        //paywall
+                        if store.isProUnlocked {
+                            Section(header: Text("External Sensor")) {
+                                if btManager.isConnected {
+                                    HStack {
+                                        Image(systemName: "sensor.fill")
+                                            .foregroundColor(.green)
+                                        Text("Connected: \(btManager.connectedPeripheral?.name ?? "Unknown WT901")")
+                                            .fontWeight(.medium)
+                                        Spacer()
+                                    }
+                                    Button(role: .destructive) {
+                                        btManager.disconnect()
+                                    } label: {
+                                        Text("Disconnect Sensor")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                } else {
+                                    NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
+                                        HStack {
+                                            Text("Find WitMotion Sensor")
+                                                .foregroundColor(.blue)
+                                            Spacer()
+                                            Image(systemName: "sensor")
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+                                }
+                            }
+
+                            if btManager.isConnected {
+                                WT901DataView(manager: btManager, peripheral: btManager.connectedPeripheral!)
+                            }
+                            
+                        } else {
+                            Section(header: Text("External Sensor")) {
+                                Button {
+                                    showPaywall = true
+                                } label: {
+                                    HStack {
+                                        Text("Find WitMotion Sensor")
+                                            .foregroundColor(.blue)
+                                        Spacer()
+                                        PremiumBadge()
+                                    }
+                                }
+                                .sheet(isPresented: $showPaywall) {
+                                    PaywallView()
+                                }
+                            }
                         }
                         
-                        Section(header: Text("GPS & Environment")) {
-                            SensorRow(label: "Speed", value: String(format: "%.1f mph", sensors.speed * 2.237))
-                            SensorRow(label: "Heading", value: String(format: "%.1f°", sensors.heading))
-                            SensorRow(label: "Pressure", value: String(format: "%.2f kPa", sensors.pressure))
-                            SensorRow(label: "Latitude", value: String(format: "%.6f", sensors.locationData?.coordinate.latitude ?? 0.0))
-                            SensorRow(label: "Longitude", value: String(format: "%.6f", sensors.locationData?.coordinate.longitude ?? 0.0))
-                        }
-                        
-                        Section(header: Text("Gyroscope")) {
-                            SensorRow(label: "Rotation X", value: String(format: "%.1f °/s", sensors.gyroX))
-                            SensorRow(label: "Rotation Y", value: String(format: "%.1f °/s", sensors.gyroY))
-                            SensorRow(label: "Rotation Z", value: String(format: "%.1f °/s", sensors.gyroZ))
-                        }
-                        
-                        Section(header: Text("Magnetometer")) {
-                            SensorRow(label: "Mag X", value: String(format: "%.1f µT", sensors.magX))
-                            SensorRow(label: "Mag Y", value: String(format: "%.1f µT", sensors.magY))
-                            SensorRow(label: "Mag Z", value: String(format: "%.1f µT", sensors.magZ))
-                        }
-                        
-                        Section(header: Text("G-Force")) {
-                            SensorRow(label: "G-Force X", value: String(format: "%.2f g", sensors.gForceX))
-                            SensorRow(label: "G-Force Y", value: String(format: "%.2f g", sensors.gForceY))
-                            SensorRow(label: "G-Force Z", value: String(format: "%.2f g", sensors.gForceZ))
-                        }
+                        //phone live view data
+                        PhoneDataView(sensors: sensors)
                     }
                     
                     //Bottom buttons
@@ -208,7 +232,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Live Sensor Data")
-            .onAppear { sensors.startAllSensors() }
+            .onAppear { sensors.startAllSensors(with: btManager) }
             .alert("Recording Limit Reached", isPresented: $sensors.showLimitAlert) {
                 Button("OK", role: .cancel) {
                     sensors.showLimitAlert = false
@@ -265,7 +289,7 @@ struct ContentView: View {
         } else if sensors.isRecording {
             return .red
         } else {
-            return .blue 
+            return .blue
         }
     }
 }
