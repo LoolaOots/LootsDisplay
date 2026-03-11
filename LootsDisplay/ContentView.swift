@@ -72,7 +72,7 @@ struct ContentView: View {
                                     Slider(value: Binding(
                                         get: { Double(sensors.recordingLimit) },
                                         set: { sensors.recordingLimit = Int($0) }
-                                    ), in: 1...60, step: 1.0)
+                                    ), in: 1...Double(store.isProUnlocked ? 180 : 60), step: 1.0) //pro members get 180s, free users get 60s
                                     .accentColor(.blue)
                                     .scaleEffect(0.95)
                                     
@@ -163,31 +163,57 @@ struct ContentView: View {
                             SensorRow(label: "G-Force Z", value: String(format: "%.2f g", sensors.gForceZ))
                         }
                         
-                        //witmotion sensor data and paywall
+                        //witmotion sensor data
+                        //paywall
                         if store.isProUnlocked {
-                            NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
-                                HStack {
-                                    Text("Find WitMotion Sensor")
-                                        .foregroundColor(.blue)
-                                    Spacer()
-                                    Image(systemName: "sensor")
-                                        .foregroundColor(.secondary)
+                            Section(header: Text("External Sensor")) {
+                                if btManager.isConnected {
+                                    HStack {
+                                        Image(systemName: "sensor.fill")
+                                            .foregroundColor(.green)
+                                        Text("Connected: \(btManager.connectedPeripheral?.name ?? "Unknown WT901")")
+                                            .fontWeight(.medium)
+                                        Spacer()
+                                    }
+                                    Button(role: .destructive) {
+                                        btManager.disconnect()
+                                    } label: {
+                                        Text("Disconnect Sensor")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                } else {
+                                    NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
+                                        HStack {
+                                            Text("Find WitMotion Sensor")
+                                                .foregroundColor(.blue)
+                                            Spacer()
+                                            Image(systemName: "sensor")
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
                                 }
                             }
+
+                            if btManager.isConnected {
+                                WT901DataView(manager: btManager, peripheral: btManager.connectedPeripheral!)
+                            }
+                            
                         } else {
-                            Button {
-                                showPaywall = true
-                            } label: {
-                                HStack {
-                                    Text("Find WitMotion Sensor")
-                                        .foregroundColor(.blue)
-                                    Spacer()
-                                    Image(systemName: "lock.fill")
-                                        .foregroundColor(.secondary)
+                            Section(header: Text("External Sensor")) {
+                                Button {
+                                    showPaywall = true
+                                } label: {
+                                    HStack {
+                                        Text("Find WitMotion Sensor")
+                                            .foregroundColor(.blue)
+                                        Spacer()
+                                        Image(systemName: "lock.fill")
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
-                            }
-                            .sheet(isPresented: $showPaywall) {
-                                PaywallView()
+                                .sheet(isPresented: $showPaywall) {
+                                    PaywallView()
+                                }
                             }
                         }
                     }

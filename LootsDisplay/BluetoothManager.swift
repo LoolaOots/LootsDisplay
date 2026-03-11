@@ -2,7 +2,7 @@ import Foundation
 import CoreBluetooth
 
 class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
-    private var centralManager: CBCentralManager!
+    private var centralManager: CBCentralManager?
     @Published var connectedPeripheral: CBPeripheral?
 
 
@@ -27,16 +27,21 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     private let packetLength = 20
     private var seenPeripheralIDs = Set<UUID>() //prevent duplicates
 
+    func requestBluetoothAccess() {
+        guard centralManager == nil else { return }
+        centralManager = CBCentralManager(delegate: self, queue: nil)
+    }
+    
     override init() {
         super.init()
-        centralManager = CBCentralManager(delegate: self, queue: nil)
+        //centralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
     func startScanning() {
-        guard centralManager.state == .poweredOn else { return }
+        guard centralManager?.state == .poweredOn else { return }
         discoveredDevices.removeAll()
         seenPeripheralIDs.removeAll()
-        centralManager.scanForPeripherals(withServices: nil, options: nil)
+        centralManager?.scanForPeripherals(withServices: nil, options: nil)
     }
     
     func stopScanning() {
@@ -47,7 +52,7 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
     func connect(to peripheral: CBPeripheral) {
         connectedPeripheral = peripheral
         connectedPeripheral?.delegate = self
-        centralManager.connect(peripheral, options: nil)
+        centralManager?.connect(peripheral, options: nil)
     }
 
     func disconnect() {

@@ -1,11 +1,3 @@
-//
-//  PaywallView.swift
-//  LootsDisplay
-//
-//  Created by Nat on 3/9/26.
-//
-
-
 import SwiftUI
 import StoreKit
 
@@ -15,32 +7,25 @@ struct PaywallView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            // Header
             VStack(spacing: 8) {
                 Image(systemName: "sensor.fill")
                     .font(.system(size: 52))
                     .foregroundColor(.blue)
-                Text("Unlock Pro Sensor Features")
+                Text("Unlock Premium Sensor Features")
                     .font(.title2).bold()
-                Text("Connect and monitor your WitMotion sensor with a Pro subscription. WitMotion901 series sensors supported.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
             }
             .padding(.top, 40)
 
-            // Features list
             VStack(alignment: .leading, spacing: 12) {
-                FeatureRow(icon: "sensor.fill", text: "Connect WitMotion Bluetooth Sensor")
-                FeatureRow(icon: "chart.bar.doc.horizontal", text: "Store up to 30 recordings (versus the free 10)")
+                FeatureRow(icon: "sensor.fill", text: "Connect WitMotion901 Series Bluetooth Sensor")
+                FeatureRow(icon: "chart.bar.doc.horizontal", text: "More Storage: up to 30 recordings")
+                FeatureRow(icon: "timer", text: "Longer Recordings: up to 3 minutes")
                 FeatureRow(icon: "clock.arrow.trianglehead.counterclockwise.rotate.90", text: "7-day free trial, cancel anytime")
             }
             .padding(.horizontal, 32)
 
             Spacer()
 
-            // Purchase button
             if store.isLoading {
                 ProgressView()
             } else if let product = store.products.first {
@@ -71,14 +56,16 @@ struct PaywallView: View {
                     .multilineTextAlignment(.center)
             }
 
-            // Legal
             HStack(spacing: 16) {
-                Link("Terms of Use", destination: URL(string: "https://yourapp.com/terms")!)
-                Link("Privacy Policy", destination: URL(string: "https://yourapp.com/privacy")!)
+                Link("Terms of Use", destination: URL(string: "ttps://www.termsfeed.com/live/f59fb290-55f8-48f1-ad37-e69d46d93c27")!)
+                Link("Privacy Policy", destination: URL(string: "https://www.termsfeed.com/live/f59fb290-55f8-48f1-ad37-e69d46d93c27")!)
             }
             .font(.caption)
             .foregroundColor(.secondary)
             .padding(.bottom, 24)
+        }
+        .onChange(of: store.isProUnlocked) { unlocked in
+            if unlocked { dismiss() }
         }
     }
 
