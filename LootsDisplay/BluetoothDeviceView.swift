@@ -1,13 +1,7 @@
-//
-//  BluetoothDeviceView.swift
-//  LootsDisplay
-//
-//  Created by Nat on 1/2/26.
-//
 import SwiftUI
 
 struct BluetoothDeviceView: View {
-    @ObservedObject var btManager: BluetoothManager  // ← shared instance passed in
+    @ObservedObject var btManager: BluetoothManager
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -54,7 +48,7 @@ struct BluetoothDeviceView: View {
             btManager.startScanning()
         }
         .onDisappear {
-            btManager.stopScanning() // stops scanning only, connection stays alive
+            btManager.stopScanning()
         }
     }
 }

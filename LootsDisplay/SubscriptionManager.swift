@@ -1,19 +1,9 @@
-//
-//  SubscriptionManager.swift
-//  LootsDisplay
-//
-//  Created by Nat on 3/9/26.
-//
-
-
 import StoreKit
 import SwiftUI
 
 @MainActor
 class SubscriptionManager: ObservableObject {
     static let shared = SubscriptionManager()
-
-    // 🔁 Replace with your actual product ID from App Store Connect
     private let proProductID = "com.labelsensordata.pro.monthly"
 
 @Published var isProUnlocked: Bool = false
@@ -34,7 +24,6 @@ class SubscriptionManager: ObservableObject {
         transactionListener?.cancel()
     }
 
-    // MARK: - Load Products
     func loadProducts() async {
         isLoading = true
         do {
@@ -45,7 +34,6 @@ class SubscriptionManager: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - Purchase
     func purchase() async throws {
         guard let product = products.first else { return }
         isLoading = true
@@ -66,7 +54,6 @@ class SubscriptionManager: ObservableObject {
         }
     }
 
-    // MARK: - Restore
     func restorePurchases() async {
         isLoading = true
         do {
@@ -78,7 +65,6 @@ class SubscriptionManager: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - Check Status
     func refreshPurchaseStatus() async {
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result {
@@ -91,7 +77,6 @@ class SubscriptionManager: ObservableObject {
         isProUnlocked = false
     }
 
-    // MARK: - Listen for Transactions (handles renewals, refunds, etc.)
     private func listenForTransactions() -> Task<Void, Error> {
         Task.detached {
             for await result in Transaction.updates {

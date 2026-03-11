@@ -134,7 +134,7 @@ class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDelegate, CB
         }
     }
 
-    //  0x61 Packet
+    //0x61 Packet
     //    bytes  2- 3  AccX   Int16 LE  → ÷32768 × 16 g
     //    bytes  4- 5  AccY
     //    bytes  6- 7  AccZ
