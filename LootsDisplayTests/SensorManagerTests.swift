@@ -82,7 +82,9 @@ final class SensorManagerTests: XCTestCase {
             timestamp: Date(), label: nil, pitch: 0, roll: 0, yaw: 0,
             latitude: 0, longitude: 0, pressure: 0, heading: 0, speed: 0,
             accelX: 0, accelY: 0, accelZ: 0, gForceX: 0, gForceY: 0, gForceZ: 0,
-            gyroX: 0, gyroY: 0, gyroZ: 0, magX: 0, magY: 0, magZ: 0
+            gyroX: 0, gyroY: 0, gyroZ: 0, magX: 0, magY: 0, magZ: 0,
+            witAccX: 0, witAccY: 0, witAccZ: 0, witRoll: 0, witPitch: 0, witYaw: 0, 
+            witAsX: 0, witAsY: 0, witAsZ: 0
         )
     }
 }
