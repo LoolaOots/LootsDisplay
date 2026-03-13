@@ -109,7 +109,7 @@ final class CSVManagerTests: XCTestCase {
                 gyroX: 0.0, gyroY: 0.0, gyroZ: 0.0,
                 magX: 0.0, magY: 0.0, magZ: 0.0,
                 witAccX: 0.0, witAccY: 0.0, witAccZ: 0.0,
-                witRoll: 0.0, witPitch: 0.0, witYaw: 0.0
+                witRoll: 0.0, witPitch: 0.0, witYaw: 0.0,
                 witAsX: 0.0, witAsY: 0.0, witAsZ: 0.0
             ))
         }
