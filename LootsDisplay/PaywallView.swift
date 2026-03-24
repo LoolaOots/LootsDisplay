@@ -23,6 +23,10 @@ struct PaywallView: View {
                 FeatureRow(icon: "clock.arrow.trianglehead.counterclockwise.rotate.90", text: "7-day free trial, cancel anytime")
             }
             .padding(.horizontal, 32)
+            
+            Text("Monthly subscription • \(store.products.first?.displayPrice ?? "")/month")
+                .font(.footnote)
+                .foregroundColor(.secondary)
 
             Spacer()
 
