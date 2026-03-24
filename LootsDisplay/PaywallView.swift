@@ -23,6 +23,10 @@ struct PaywallView: View {
                 FeatureRow(icon: "clock.arrow.trianglehead.counterclockwise.rotate.90", text: "7-day free trial, cancel anytime")
             }
             .padding(.horizontal, 32)
+            
+            Text("Monthly subscription • \(store.products.first?.displayPrice ?? "")/month")
+                .font(.footnote)
+                .foregroundColor(.secondary)
 
             Spacer()
 
@@ -57,7 +61,7 @@ struct PaywallView: View {
             }
 
             HStack(spacing: 16) {
-                Link("Terms of Use", destination: URL(string: "ttps://www.termsfeed.com/live/f59fb290-55f8-48f1-ad37-e69d46d93c27")!)
+                Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                 Link("Privacy Policy", destination: URL(string: "https://www.termsfeed.com/live/f59fb290-55f8-48f1-ad37-e69d46d93c27")!)
             }
             .font(.caption)
