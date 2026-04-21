@@ -23,29 +23,29 @@ struct ContentView: View {
                     
                     //Recording settings
                     List {
-                        Section(header: Text("Recording Controls")) {
+                        Section(header: Text("section.recording_controls")) {
                             //Recording status
                             HStack {
                                 Circle()
                                     .fill(sensors.isRecording ? Color.red : Color.gray)
                                     .frame(width: 10, height: 10)
-                                
+
                                 if sensors.isRecording {
-                                    Text("Active: \(sensors.secondsElapsed)s / \(sensors.recordingLimit)s")
+                                    Text(String(format: String(localized: "status.active"), sensors.secondsElapsed, sensors.recordingLimit))
                                         .bold()
                                         .foregroundColor(.red)
                                 } else {
-                                    Text("Ready")
+                                    Text("status.ready")
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
                                 if !sensors.isRecording && !sensors.recordedData.isEmpty {
-                                    Text("\(sensors.recordedData.count) frames")
+                                    Text(String(format: String(localized: "status.frames"), sensors.recordedData.count))
                                         .font(.caption)
                                         .foregroundColor(.blue)
                                 }
                             }
-                            
+
                             //Recording limit button
                             Button(action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -53,7 +53,7 @@ struct ContentView: View {
                                 }
                             }) {
                                 HStack {
-                                    Label("Limit", systemImage: "timer")
+                                    Label("label.limit", systemImage: "timer")
                                         .foregroundColor(.primary)
                                     Spacer()
                                     Text("\(sensors.recordingLimit)s")
@@ -65,7 +65,7 @@ struct ContentView: View {
                                 }
                             }
                             .disabled(sensors.isRecording)
-                            
+
                             //Recording duration slider when expanded
                             if isDurationExpanded && !sensors.isRecording {
                                 VStack(spacing: 15) {
@@ -75,8 +75,8 @@ struct ContentView: View {
                                     ), in: 1...Double(store.isProUnlocked ? 180 : 60), step: 1.0) //pro members get 180s, free users get 60s
                                     .accentColor(.blue)
                                     .scaleEffect(0.95)
-                                    
-                                    Text("\(sensors.recordingLimit) Seconds")
+
+                                    Text(String(format: String(localized: "label.seconds"), sensors.recordingLimit))
                                         .font(.headline)
                                         .bold()
                                         .foregroundColor(.blue)
@@ -84,7 +84,7 @@ struct ContentView: View {
                                 .padding(.vertical, 8)
                                 .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
                             }
-                            
+
                             //Recording delay button
                             Button(action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -92,7 +92,7 @@ struct ContentView: View {
                                 }
                             }) {
                                 HStack {
-                                    Label("Delay", systemImage: "hourglass")
+                                    Label("label.delay", systemImage: "hourglass")
                                         .foregroundColor(.primary)
                                     Spacer()
                                     Text("\(sensors.recordingDelay)s").bold()
@@ -130,25 +130,25 @@ struct ContentView: View {
                         //witmotion sensor data
                         //paywall
                         if store.isProUnlocked {
-                            Section(header: Text("External Sensor")) {
+                            Section(header: Text("section.external_sensor")) {
                                 if btManager.isConnected {
                                     HStack {
                                         Image(systemName: "sensor.fill")
                                             .foregroundColor(.green)
-                                        Text("Connected: \(btManager.connectedPeripheral?.name ?? "Unknown WT901")")
+                                        Text(String(format: String(localized: "sensor.connected"), btManager.connectedPeripheral?.name ?? String(localized: "sensor.unknown_wt901")))
                                             .fontWeight(.medium)
                                         Spacer()
                                     }
                                     Button(role: .destructive) {
                                         btManager.disconnect()
                                     } label: {
-                                        Text("Disconnect Sensor")
+                                        Text("btn.disconnect_sensor")
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     }
                                 } else {
                                     NavigationLink(destination: BluetoothDeviceView(btManager: btManager)) {
                                         HStack {
-                                            Text("Find WitMotion Sensor")
+                                            Text("btn.find_witmotion_sensor")
                                                 .foregroundColor(.blue)
                                             Spacer()
                                             Image(systemName: "sensor")
@@ -161,14 +161,14 @@ struct ContentView: View {
                             if btManager.isConnected {
                                 WT901DataView(manager: btManager, peripheral: btManager.connectedPeripheral!)
                             }
-                            
+
                         } else {
-                            Section(header: Text("External Sensor")) {
+                            Section(header: Text("section.external_sensor")) {
                                 Button {
                                     showPaywall = true
                                 } label: {
                                     HStack {
-                                        Text("Find WitMotion Sensor")
+                                        Text("btn.find_witmotion_sensor")
                                             .foregroundColor(.blue)
                                         Spacer()
                                         PremiumBadge()
@@ -199,7 +199,7 @@ struct ContentView: View {
                         
                         //Recorded data button
                         NavigationLink(destination: DataHistoryView(sensors: sensors)) {
-                            Text("VIEW RECORDED DATA")
+                            Text("btn.view_recorded_data")
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -231,17 +231,17 @@ struct ContentView: View {
                     .zIndex(1)
                 }
             }
-            .navigationTitle("Live Sensor Data")
+            .navigationTitle("nav.live_sensor_data")
             .onAppear { sensors.startAllSensors(with: btManager) }
-            .alert("Recording Limit Reached", isPresented: $sensors.showLimitAlert) {
-                Button("OK", role: .cancel) {
+            .alert("alert.recording_limit.title", isPresented: $sensors.showLimitAlert) {
+                Button("btn.ok", role: .cancel) {
                     sensors.showLimitAlert = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         sensors.navigateToHistory = true
                     }
                 }
             } message: {
-                Text("You have reached the maximum saved recordings. Remove an existing entry to start a new session.")
+                Text("alert.recording_limit.message")
             }
             
             
@@ -280,7 +280,7 @@ struct ContentView: View {
     }
 
     private var buttonText: String {
-        return sensors.isRecording ? "STOP RECORDING" : "START RECORDING"
+        return sensors.isRecording ? String(localized: "btn.stop_recording") : String(localized: "btn.start_recording")
     }
 
     private var buttonColor: Color {
@@ -297,13 +297,12 @@ struct ContentView: View {
 struct SensorRow: View {
     let label: String
     let value: String
-    
+
     var body: some View {
         HStack {
-            Text(label).foregroundColor(.secondary)
+            Text(LocalizedStringKey(label)).foregroundColor(.secondary)
             Spacer()
             Text(value).bold().monospacedDigit().accessibilityIdentifier("\(label)_Value")
-            
         }
     }
 }

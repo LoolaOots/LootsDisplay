@@ -15,6 +15,38 @@ enum SensorType: String, CaseIterable, Identifiable {
     case witAsX = "WIT AsX", witAsY = "WIT AsY", witAsZ = "WIT AsZ"
     
     var id: String { self.rawValue }
+
+    var localizedName: LocalizedStringKey {
+        switch self {
+        case .pitch:    return "sensor.pitch"
+        case .roll:     return "sensor.roll"
+        case .yaw:      return "sensor.yaw"
+        case .heading:  return "sensor.heading"
+        case .accelX:   return "sensor.accel_x"
+        case .accelY:   return "sensor.accel_y"
+        case .accelZ:   return "sensor.accel_z"
+        case .gForceX:  return "sensor.gforce_x"
+        case .gForceY:  return "sensor.gforce_y"
+        case .gForceZ:  return "sensor.gforce_z"
+        case .gyroX:    return "sensor.gyro_x"
+        case .gyroY:    return "sensor.gyro_y"
+        case .gyroZ:    return "sensor.gyro_z"
+        case .magX:     return "sensor.mag_x"
+        case .magY:     return "sensor.mag_y"
+        case .magZ:     return "sensor.mag_z"
+        case .speed:    return "sensor.speed"
+        case .pressure: return "sensor.pressure"
+        case .witAccX:  return "sensor.wit_accel_x"
+        case .witAccY:  return "sensor.wit_accel_y"
+        case .witAccZ:  return "sensor.wit_accel_z"
+        case .witRoll:  return "sensor.wit_roll"
+        case .witPitch: return "sensor.wit_pitch"
+        case .witYaw:   return "sensor.wit_yaw"
+        case .witAsX:   return "sensor.wit_as_x"
+        case .witAsY:   return "sensor.wit_as_y"
+        case .witAsZ:   return "sensor.wit_as_z"
+        }
+    }
     
     var color: Color {
         switch self {
@@ -226,32 +258,32 @@ struct SensorGraphView: View {
                     .chartLegend(.hidden)
                     .frame(height: 350)
                 } header: {
-                    Text("Sensor Trends")
+                    Text("section.sensor_trends")
                 }
-                
-                Section(header: Text("Toggle Variables to View")) {
-                    
-                    sensorToggleGroup(title: "Motion & Attitude", types: [.pitch, .roll, .yaw, .accelX, .accelY, .accelZ])
-                    
-                    sensorToggleGroup(title: "GPS & Environment", types: [.speed, .heading, .pressure])
-                    
-                    sensorToggleGroup(title: "Gyroscope", types: [.gyroX, .gyroY, .gyroZ])
-                    
-                    sensorToggleGroup(title: "Magnetometer", types: [.magX, .magY, .magZ])
-                    
-                    sensorToggleGroup(title: "G-Force", types: [.gForceX, .gForceY, .gForceZ])
-                    
+
+                Section(header: Text("section.toggle_variables")) {
+
+                    sensorToggleGroup(title: "group.motion_attitude", types: [.pitch, .roll, .yaw, .accelX, .accelY, .accelZ])
+
+                    sensorToggleGroup(title: "group.gps_environment", types: [.speed, .heading, .pressure])
+
+                    sensorToggleGroup(title: "group.gyroscope", types: [.gyroX, .gyroY, .gyroZ])
+
+                    sensorToggleGroup(title: "group.magnetometer", types: [.magX, .magY, .magZ])
+
+                    sensorToggleGroup(title: "group.gforce", types: [.gForceX, .gForceY, .gForceZ])
+
                     //Sensor Data
                     let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
                     if sensorConnected {
-                        sensorToggleGroup(title: "WitMotion Sensor",
+                        sensorToggleGroup(title: "group.witmotion_sensor",
                                           types: [.witAccX, .witAccY, .witAccZ, .witRoll, .witPitch, .witYaw, .witAsX, .witAsY, .witAsZ])
                     }
-                    
+
                 }
             }
         }
-        .navigationTitle("Graph")
+        .navigationTitle("nav.graph")
     }
     
     func unitLabel(for type: SensorType) -> String {
@@ -275,7 +307,7 @@ struct SensorGraphView: View {
     }
     
     @ViewBuilder
-    func sensorToggleGroup(title: String, types: [SensorType]) -> some View {
+    func sensorToggleGroup(title: LocalizedStringKey, types: [SensorType]) -> some View {
         let selectedCount = types.filter { selectedTypes.contains($0) }.count
         let allSelected = selectedCount == types.count
         let isMixed = selectedCount > 0 && selectedCount < types.count
@@ -295,7 +327,7 @@ struct SensorGraphView: View {
                                 .foregroundColor(type.color)
                                 .font(.system(size: 16))
                             
-                            Text(type.rawValue)
+                            Text(type.localizedName)
                                 .font(.body)
                                 .foregroundColor(.primary)
                             

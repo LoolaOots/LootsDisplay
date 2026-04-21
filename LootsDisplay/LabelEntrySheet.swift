@@ -12,13 +12,13 @@ struct LabelEntrySheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section(header: Text("New Label")) {
-                    TextField("e.g., Bench Press Set 1", text: $tempLabelText)
+                Section(header: Text("section.new_label")) {
+                    TextField("label.placeholder", text: $tempLabelText)
                         .submitLabel(.done)
                 }
                 
                 if !labelManager.recentLabels.isEmpty {
-                    Section(header: Text("Recent Labels")) {
+                    Section(header: Text("section.recent_labels")) {
                         ForEach(labelManager.recentLabels, id: \.self) { label in
                             Button {
                                 tempLabelText = label
@@ -39,14 +39,14 @@ struct LabelEntrySheet: View {
                     }
                 }
             }
-            .navigationTitle("Add Label")
+            .navigationTitle("nav.add_label")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("btn.cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Apply") {
+                    Button("btn.apply") {
                         for session in sessionsToLabel {
                             sensors.applyLabelToSession(id: session.id, label: tempLabelText)
                         }

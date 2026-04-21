@@ -2,7 +2,7 @@ import SwiftUI
 
 struct PremiumBadge: View {
     var body: some View {
-        Text("PREMIUM")
+        Text("badge.premium")
             .font(.system(size: 9, weight: .bold))
             .foregroundColor(.white)
             .padding(.horizontal, 6)
@@ -33,7 +33,7 @@ extension Color {
 
 #Preview {
     HStack {
-        Text("Find WitMotion Sensor")
+        Text("btn.find_witmotion_sensor")
             .foregroundColor(.blue)
         Spacer()
         PremiumBadge()

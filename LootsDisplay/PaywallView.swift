@@ -11,20 +11,20 @@ struct PaywallView: View {
                 Image(systemName: "sensor.fill")
                     .font(.system(size: 52))
                     .foregroundColor(.blue)
-                Text("Unlock Premium Sensor Features")
+                Text("paywall.title")
                     .font(.title2).bold()
             }
             .padding(.top, 40)
 
             VStack(alignment: .leading, spacing: 12) {
-                FeatureRow(icon: "sensor.fill", text: "Connect WitMotion901 Series Bluetooth Sensor")
-                FeatureRow(icon: "chart.bar.doc.horizontal", text: "More Storage: up to 30 recordings")
-                FeatureRow(icon: "timer", text: "Longer Recordings: up to 3 minutes")
-                FeatureRow(icon: "clock.arrow.trianglehead.counterclockwise.rotate.90", text: "7-day free trial, cancel anytime")
+                FeatureRow(icon: "sensor.fill", text: "paywall.feature.bluetooth")
+                FeatureRow(icon: "chart.bar.doc.horizontal", text: "paywall.feature.storage")
+                FeatureRow(icon: "timer", text: "paywall.feature.duration")
+                FeatureRow(icon: "clock.arrow.trianglehead.counterclockwise.rotate.90", text: "paywall.feature.trial")
             }
             .padding(.horizontal, 32)
-            
-            Text("Monthly subscription • \(store.products.first?.displayPrice ?? "")/month")
+
+            Text(String(format: String(localized: "paywall.pricing"), store.products.first?.displayPrice ?? ""))
                 .font(.footnote)
                 .foregroundColor(.secondary)
 
@@ -37,7 +37,7 @@ struct PaywallView: View {
                     Button {
                         Task { try? await store.purchase() }
                     } label: {
-                        Text("Start Free Trial - then \(product.displayPrice)/\(subscriptionPeriod(product))")
+                        Text(String(format: String(localized: "paywall.btn.start_trial"), product.displayPrice, subscriptionPeriod(product)))
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -47,22 +47,22 @@ struct PaywallView: View {
                     }
                     .padding(.horizontal)
 
-                    Button("Restore Purchases") {
+                    Button("paywall.btn.restore") {
                         Task { await store.restorePurchases() }
                     }
                     .font(.footnote)
                     .foregroundColor(.secondary)
                 }
             } else {
-                Text("Unable to load subscription options.\nCheck your connection.")
+                Text("paywall.error.no_subscription")
                     .font(.footnote)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
 
             HStack(spacing: 16) {
-                Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                Link("Privacy Policy", destination: URL(string: "https://www.termsfeed.com/live/f59fb290-55f8-48f1-ad37-e69d46d93c27")!)
+                Link("paywall.terms_of_use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Link("paywall.privacy_policy", destination: URL(string: "https://www.termsfeed.com/live/f59fb290-55f8-48f1-ad37-e69d46d93c27")!)
             }
             .font(.caption)
             .foregroundColor(.secondary)
@@ -75,17 +75,17 @@ struct PaywallView: View {
 
     private func subscriptionPeriod(_ product: Product) -> String {
         switch product.subscription?.subscriptionPeriod.unit {
-        case .month: return "mo"
-        case .year: return "yr"
-        case .week: return "wk"
-        default: return "period"
+        case .month: return String(localized: "paywall.period.month")
+        case .year:  return String(localized: "paywall.period.year")
+        case .week:  return String(localized: "paywall.period.week")
+        default:     return String(localized: "paywall.period.default")
         }
     }
 }
 
 struct FeatureRow: View {
     let icon: String
-    let text: String
+    let text: LocalizedStringKey
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
