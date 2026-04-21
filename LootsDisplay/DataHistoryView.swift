@@ -16,7 +16,7 @@ struct DataHistoryView: View {
         VStack(spacing: 0) {
             historyList
         }
-        .navigationTitle("History")
+        .navigationTitle("nav.history")
         .environment(\.editMode, $editMode)
         .toolbar {
             topToolbarItems
@@ -47,9 +47,9 @@ struct DataHistoryView: View {
 
     private var historyList: some View {
         List(selection: $selectedSessionIDs) {
-            Section(header: Text("Recorded Samples")) {
+            Section(header: Text("section.recorded_samples")) {
                 if sensors.sessions.isEmpty {
-                    Text("No sessions found").foregroundColor(.secondary)
+                    Text("history.no_sessions").foregroundColor(.secondary)
                 } else {
                     ForEach(sensors.sessions) { session in
                         SessionRowView(
@@ -69,11 +69,11 @@ struct DataHistoryView: View {
     @ViewBuilder
     private var labelAlertContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            TextField("e.g., Bench Press Set 1", text: $tempLabelText)
+            TextField("label.placeholder", text: $tempLabelText)
                 .textFieldStyle(.roundedBorder)
 
             if !labelManager.recentLabels.isEmpty {
-                Text("Recent Labels")
+                Text("section.recent_labels")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
@@ -92,14 +92,14 @@ struct DataHistoryView: View {
             }
         }
         
-        Button("Apply") {
+        Button("btn.apply") {
             for session in sessionsToLabel {
                 sensors.applyLabelToSession(id: session.id, label: tempLabelText)
             }
             tempLabelText = ""
             sessionsToLabel = []
         }
-        Button("Cancel", role: .cancel) {
+        Button("btn.cancel", role: .cancel) {
             tempLabelText = ""
             sessionsToLabel = []
         }
@@ -108,7 +108,7 @@ struct DataHistoryView: View {
     @ToolbarContentBuilder
     private var topToolbarItems: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button(editMode == .active ? "Done" : "Select") {
+            Button(editMode == .active ? "btn.done" : "btn.select") {
                 withAnimation {
                     if editMode == .active {
                         editMode = .inactive
@@ -136,7 +136,7 @@ struct DataHistoryView: View {
         }
 
         ToolbarItem(placement: .bottomBar) {
-            Text(selectedSessionIDs.isEmpty ? "Select Samples" : "\(selectedSessionIDs.count) Selected")
+            Text(selectedSessionIDs.isEmpty ? String(localized: "toolbar.select_samples") : String(format: String(localized: "toolbar.selected"), selectedSessionIDs.count))
                 .font(.headline)
                 .foregroundColor(.primary)
                 .fixedSize()
@@ -144,11 +144,11 @@ struct DataHistoryView: View {
         }
 
         ToolbarItemGroup(placement: .bottomBar) {
-            Button("Save", systemImage: "square.and.arrow.down") {
+            Button("btn.save", systemImage: "square.and.arrow.down") {
                 bulkSaveCSV()
             }
             .disabled(selectedSessionIDs.isEmpty)
-            Button("Label", systemImage: "tag") {
+            Button("btn.label", systemImage: "tag") {
                 sessionsToLabel = sensors.sessions.filter { selectedSessionIDs.contains($0.id) }
                 showingLabelAlert = true
             }
@@ -205,7 +205,7 @@ struct SessionRowView: View {
                     }
                 }
                 
-                Text("\(session.frames.count) frames captured")
+                Text(String(format: String(localized: "session.frames_captured"), session.frames.count))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -231,7 +231,7 @@ struct SessionRowView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "square.and.arrow.down")
-                                Text("Save")
+                                Text("btn.save")
                                 Spacer()
                             }
                             .padding()
@@ -243,7 +243,7 @@ struct SessionRowView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "tag")
-                                Text("Label")
+                                Text("btn.label")
                                 Spacer()
                             }
                             .padding()
@@ -256,7 +256,7 @@ struct SessionRowView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "trash")
-                                Text("Delete")
+                                Text("btn.delete")
                                 Spacer()
                             }
                             .padding()

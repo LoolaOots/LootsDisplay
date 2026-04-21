@@ -9,7 +9,7 @@ struct BluetoothDeviceView: View {
             if btManager.discoveredDevices.isEmpty {
                 VStack(spacing: 10) {
                     ProgressView()
-                    Text("Scanning for WT901 Sensors...")
+                    Text("bt.scanning")
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 100)
@@ -22,7 +22,7 @@ struct BluetoothDeviceView: View {
                     } label: {
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(device.name ?? "Unknown Device")
+                                Text(device.name ?? String(localized: "bt.unknown_device"))
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                 Text(device.identifier.uuidString)
@@ -42,7 +42,7 @@ struct BluetoothDeviceView: View {
                 }
             }
         }
-        .navigationTitle("Find Sensor")
+        .navigationTitle("nav.find_sensor")
         .onAppear {
             btManager.requestBluetoothAccess()
             btManager.startScanning()
