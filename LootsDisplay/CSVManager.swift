@@ -59,7 +59,7 @@ struct CSVManager {
         let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
         let isoFormatter = ISO8601DateFormatter()
 
-        var header = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ"
+        var header = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ,Cadence,Steps"
         if sensorConnected {
             header += witCSVHeader()
         }
@@ -75,7 +75,9 @@ struct CSVManager {
                 "\(frame.accelX)", "\(frame.accelY)", "\(frame.accelZ)",
                 "\(frame.gForceX)", "\(frame.gForceY)", "\(frame.gForceZ)",
                 "\(frame.gyroX)", "\(frame.gyroY)", "\(frame.gyroZ)",
-                "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)"
+                "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)",
+                "\(frame.cadence ?? 0.0)",
+                "\(frame.steps ?? 0)"
             ].joined(separator: ",")
 
             if sensorConnected {

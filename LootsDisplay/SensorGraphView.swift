@@ -7,7 +7,7 @@ enum SensorType: String, CaseIterable, Identifiable {
     case gForceX = "G-Force X", gForceY = "G-Force Y", gForceZ = "G-Force Z"
     case gyroX = "Gyro X", gyroY = "Gyro Y", gyroZ = "Gyro Z"
     case magX = "Mag X", magY = "Mag Y", magZ = "Mag Z"
-    case speed = "Speed", pressure = "Pressure"
+    case speed = "Speed", pressure = "Pressure", cadence = "Cadence", steps = "Steps"
     
     //Sensor Data
     case witAccX = "WIT Accel X", witAccY = "WIT Accel Y", witAccZ = "WIT Accel Z"
@@ -36,6 +36,8 @@ enum SensorType: String, CaseIterable, Identifiable {
         case .magZ:     return "sensor.mag_z"
         case .speed:    return "sensor.speed"
         case .pressure: return "sensor.pressure"
+        case .cadence:  return "sensor.cadence"
+        case .steps:    return "sensor.steps"
         case .witAccX:  return "sensor.wit_accel_x"
         case .witAccY:  return "sensor.wit_accel_y"
         case .witAccZ:  return "sensor.wit_accel_z"
@@ -64,6 +66,8 @@ enum SensorType: String, CaseIterable, Identifiable {
         case .speed: return .orange
         case .heading: return Color(red: 0.6, green: 0.5, blue: 0.0)
         case .pressure: return .gray
+        case .cadence: return Color(red: 0.0, green: 0.75, blue: 0.4)
+        case .steps: return Color(red: 0.5, green: 0.3, blue: 0.85)
         
         //Gyroscope (Muted RGB / Neon)
         case .gyroX: return .pink
@@ -213,7 +217,15 @@ struct SensorGraphView: View {
                                 LineMark(x: .value("Time", index), y: .value("Pressure", frame.pressure))
                                     .foregroundStyle(by: .value("Series", "Pressure"))
                             }
-                            
+                            if selectedTypes.contains(.cadence), let val = frame.cadence {
+                                LineMark(x: .value("Time", index), y: .value("Cadence", val))
+                                    .foregroundStyle(by: .value("Series", "Cadence"))
+                            }
+                            if selectedTypes.contains(.steps), let val = frame.steps {
+                                LineMark(x: .value("Time", index), y: .value("Steps", Double(val)))
+                                    .foregroundStyle(by: .value("Series", "Steps"))
+                            }
+
                             //Sensor
                             if selectedTypes.contains(.witAccX), let val = frame.witAccX {
                                 LineMark(x: .value("Time", index), y: .value("WIT Accel X", val))
@@ -265,7 +277,7 @@ struct SensorGraphView: View {
 
                     sensorToggleGroup(title: "group.motion_attitude", types: [.pitch, .roll, .yaw, .accelX, .accelY, .accelZ])
 
-                    sensorToggleGroup(title: "group.gps_environment", types: [.speed, .heading, .pressure])
+                    sensorToggleGroup(title: "group.gps_environment", types: [.speed, .heading, .pressure, .cadence, .steps])
 
                     sensorToggleGroup(title: "group.gyroscope", types: [.gyroX, .gyroY, .gyroZ])
 
@@ -295,6 +307,8 @@ struct SensorGraphView: View {
         case .magX, .magY, .magZ: return "µT"
         case .speed: return "mph"
         case .pressure: return "kPa"
+        case .cadence: return "spm"
+        case .steps: return "steps"
         case .witAccX, .witAccY, .witAccZ: return "g"
         case .witRoll, .witPitch, .witYaw: return "°"
         case .witAsX, .witAsY, .witAsZ: return "°/s"

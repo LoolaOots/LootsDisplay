@@ -649,6 +649,9 @@
         }
       }
     },
+    "Cadence" : {
+
+    },
     "G-Force X" : {
 
     },
@@ -2193,6 +2196,41 @@
         }
       }
     },
+    "sensor.cadence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cadence"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cadencia"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cadencia"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步频"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步頻"
+          }
+        }
+      }
+    },
     "sensor.connected" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2893,6 +2931,41 @@
         }
       }
     },
+    "sensor.steps" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasos"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步数"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步數"
+          }
+        }
+      }
+    },
     "sensor.streaming_data" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3563,6 +3636,9 @@
           }
         }
       }
+    },
+    "Steps" : {
+
     },
     "Time" : {
 
