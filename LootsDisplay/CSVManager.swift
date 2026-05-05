@@ -76,8 +76,7 @@ struct CSVManager {
                 "\(frame.gForceX)", "\(frame.gForceY)", "\(frame.gForceZ)",
                 "\(frame.gyroX)", "\(frame.gyroY)", "\(frame.gyroZ)",
                 "\(frame.magX)", "\(frame.magY)", "\(frame.magZ)",
-                "\(frame.cadence ?? 0.0)",
-                "\(frame.steps ?? 0)"
+                "\(frame.cadence ?? 0.0)","\(frame.steps ?? 0)"
             ].joined(separator: ",")
 
             if sensorConnected {

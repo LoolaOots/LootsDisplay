@@ -285,17 +285,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
         }
-
-        if CMAltimeter.isRelativeAltitudeAvailable() {
-            altimeter.startRelativeAltitudeUpdates(to: .main) { data, _ in
-                guard let alt = data else { return }
-                self.pressure = alt.pressure.doubleValue
-            }
-        }
-
-        locationManager.startUpdatingLocation()
-        locationManager.startUpdatingHeading()
-
+        
+        //live view for cadence
         pedometerBaseline = (steps: 0, time: Date())
         pedometer.startUpdates(from: Date()) { data, _ in
             guard let data = data else { return }
@@ -317,6 +308,18 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
         }
+
+        if CMAltimeter.isRelativeAltitudeAvailable() {
+            altimeter.startRelativeAltitudeUpdates(to: .main) { data, _ in
+                guard let alt = data else { return }
+                self.pressure = alt.pressure.doubleValue
+            }
+        }
+
+        locationManager.startUpdatingLocation()
+        locationManager.startUpdatingHeading()
+
+
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
