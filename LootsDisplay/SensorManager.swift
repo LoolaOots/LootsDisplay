@@ -33,6 +33,9 @@ struct SensorFrame: Codable {
     let magX: Double
     let magY: Double
     let magZ: Double
+    // Cadence and step count via CMPedometer
+    let cadence: Double?
+    let steps: Int?
     // WIT Motion Sensor Data
     let witAccX: Double?
     let witAccY: Double?
@@ -62,6 +65,10 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let motionManager = CMMotionManager()
     private let altimeter = CMAltimeter()
     private let locationManager = CLLocationManager()
+    private let pedometer = CMPedometer()
+    private var pedometerBaseline = (steps: 0, time: Date())
+    private var latestTotalSteps: Int = 0
+    private var recordingStartSteps: Int = 0
     private let limitKey = "user_recording_limit"
     
     // UI State
@@ -81,7 +88,9 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var magX: Double = 0.0
     @Published var magY: Double = 0.0
     @Published var magZ: Double = 0.0
-    
+    @Published var cadence: Double = 0.0
+    @Published var sessionSteps: Int = 0
+
     // Recording State
     @Published var isRecording = false
     @Published var recordedData: [SensorFrame] = []
@@ -144,6 +153,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private func startRecording() {
         recordedData.removeAll()
         secondsElapsed = 0
+        sessionSteps = 0
+        recordingStartSteps = latestTotalSteps
         isRecording = true
             
         //dynamic limit set by the slider
@@ -257,6 +268,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         magX: self.magX,
                         magY: self.magY,
                         magZ: self.magZ,
+                        cadence: CMPedometer.isCadenceAvailable() ? self.cadence : nil,
+                        steps: CMPedometer.isStepCountingAvailable() ? self.sessionSteps : nil,
                         //WIT Sensor Data
                         witAccX: btManager.isConnected ? Double(btManager.accX) : nil,
                         witAccY: btManager.isConnected ? Double(btManager.accY) : nil,
@@ -272,6 +285,29 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 }
             }
         }
+        
+        //live view for cadence
+        pedometerBaseline = (steps: 0, time: Date())
+        pedometer.startUpdates(from: Date()) { data, _ in
+            guard let data = data else { return }
+            let now = Date()
+            let steps = data.numberOfSteps.intValue
+            let elapsed = now.timeIntervalSince(self.pedometerBaseline.time)
+            let delta = steps - self.pedometerBaseline.steps
+            self.pedometerBaseline = (steps: steps, time: now)
+            self.latestTotalSteps = steps
+            guard elapsed > 0 else { return }
+            DispatchQueue.main.async {
+                if let current = data.currentCadence?.doubleValue {
+                    self.cadence = current * 60.0
+                } else if delta > 0 {
+                    self.cadence = Double(delta) / elapsed * 60.0
+                }
+                if self.isRecording {
+                    self.sessionSteps = steps - self.recordingStartSteps
+                }
+            }
+        }
 
         if CMAltimeter.isRelativeAltitudeAvailable() {
             altimeter.startRelativeAltitudeUpdates(to: .main) { data, _ in
@@ -282,6 +318,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
         locationManager.startUpdatingLocation()
         locationManager.startUpdatingHeading()
+
+
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -307,6 +345,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     gForceX: frame.gForceX, gForceY: frame.gForceY, gForceZ: frame.gForceZ,
                     gyroX: frame.gyroX, gyroY: frame.gyroY, gyroZ: frame.gyroZ,
                     magX: frame.magX, magY: frame.magY, magZ: frame.magZ,
+                    cadence: frame.cadence,
+                    steps: frame.steps,
                     witAccX: frame.witAccX, witAccY: frame.witAccY, witAccZ: frame.witAccZ,
                     witRoll: frame.witRoll, witPitch: frame.witPitch, witYaw: frame.witYaw,
                     witAsX: frame.witAsX, witAsY: frame.witAsY, witAsZ: frame.witAsZ

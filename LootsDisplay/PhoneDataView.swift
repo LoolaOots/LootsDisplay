@@ -17,6 +17,8 @@ struct PhoneDataView: View {
             SensorRow(label: "sensor.speed", value: String(format: "%.1f mph", sensors.speed * 2.237))
             SensorRow(label: "sensor.heading", value: String(format: "%.1f°", sensors.heading))
             SensorRow(label: "sensor.pressure", value: String(format: "%.2f kPa", sensors.pressure))
+            SensorRow(label: "sensor.cadence", value: String(format: "%.0f spm", sensors.cadence))
+            SensorRow(label: "sensor.steps", value: "\(sensors.sessionSteps)")
             SensorRow(label: "sensor.latitude", value: String(format: "%.6f", sensors.locationData?.coordinate.latitude ?? 0.0))
             SensorRow(label: "sensor.longitude", value: String(format: "%.6f", sensors.locationData?.coordinate.longitude ?? 0.0))
         }
