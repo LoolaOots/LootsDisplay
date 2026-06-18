@@ -43,8 +43,10 @@ class SubscriptionManager: ObservableObject {
         switch result {
         case .success(let verification):
             let transaction = try checkVerified(verification)
+            if transaction.productID == proProductID && transaction.revocationDate == nil {
+                isProUnlocked = true
+            }
             await transaction.finish()
-            await refreshPurchaseStatus()
         case .userCancelled:
             break
         case .pending:
