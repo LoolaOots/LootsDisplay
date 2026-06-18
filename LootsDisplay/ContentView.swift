@@ -72,7 +72,7 @@ struct ContentView: View {
                                     Slider(value: Binding(
                                         get: { Double(sensors.recordingLimit) },
                                         set: { sensors.recordingLimit = Int($0) }
-                                    ), in: 1...Double(store.isProUnlocked ? 180 : 60), step: 1.0) //pro members get 180s, free users get 60s
+                                    ), in: 1...Double(store.isProUnlocked ? 600 : 300), step: 1.0) //pro members get 600s, free users get 300s
                                     .accentColor(.blue)
                                     .scaleEffect(0.95)
 
