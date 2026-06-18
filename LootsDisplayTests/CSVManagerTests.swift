@@ -108,9 +108,14 @@ final class CSVManagerTests: XCTestCase {
                 gForceX: 1.0, gForceY: 0.0, gForceZ: 0.0,
                 gyroX: 0.0, gyroY: 0.0, gyroZ: 0.0,
                 magX: 0.0, magY: 0.0, magZ: 0.0,
+                cadence: nil, steps: nil,
                 witAccX: 0.0, witAccY: 0.0, witAccZ: 0.0,
                 witRoll: 0.0, witPitch: 0.0, witYaw: 0.0,
-                witAsX: 0.0, witAsY: 0.0, witAsZ: 0.0
+                witAsX: 0.0, witAsY: 0.0, witAsZ: 0.0,
+                airpodsRoll: nil, airpodsPitch: nil, airpodsYaw: nil,
+                airpodsAccelX: nil, airpodsAccelY: nil, airpodsAccelZ: nil,
+                airpodsGravityX: nil, airpodsGravityY: nil, airpodsGravityZ: nil,
+                airpodsGyroX: nil, airpodsGyroY: nil, airpodsGyroZ: nil
             ))
         }
         
