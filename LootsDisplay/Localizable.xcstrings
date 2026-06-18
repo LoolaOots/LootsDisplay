@@ -1388,31 +1388,31 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Longer Recordings: up to 3 minutes"
+            "value" : "Longer Recordings: up to 10 minutes"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Grabaciones Más Largas: hasta 3 minutos"
+            "value" : "Grabaciones Más Largas: hasta 10 minutos"
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Grabaciones Más Largas: hasta 3 minutos"
+            "value" : "Grabaciones Más Largas: hasta 10 minutos"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "更长录制时间：最多3分钟"
+            "value" : "更长录制时间：最多10分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "更長錄製時間：最多3分鐘"
+            "value" : "更長錄製時間：最多10分鐘"
           }
         }
       }
