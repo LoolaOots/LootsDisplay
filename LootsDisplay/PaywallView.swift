@@ -18,6 +18,7 @@ struct PaywallView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 FeatureRow(icon: "sensor.fill", text: "paywall.feature.bluetooth")
+                FeatureRow(icon: "airpodspro", text: "paywall.feature.airpods")
                 FeatureRow(icon: "chart.bar.doc.horizontal", text: "paywall.feature.storage")
                 FeatureRow(icon: "timer", text: "paywall.feature.duration")
                 FeatureRow(icon: "clock.arrow.trianglehead.counterclockwise.rotate.90", text: "paywall.feature.trial")

@@ -57,11 +57,15 @@ struct CSVManager {
     //Convert recording session into csv string
     static func generateCSVString(for session: RecordingSession) -> String {
         let sensorConnected = session.frames.first?.witAccX != nil || session.frames.first?.witYaw != nil
+        let airpodsConnected = session.frames.first?.airpodsAccelX != nil || session.frames.first?.airpodsYaw != nil
         let isoFormatter = ISO8601DateFormatter()
 
         var header = "Timestamp,Label,Pitch,Roll,Yaw,Latitude,Longitude,Pressure,Heading,Speed,AccelX,AccelY,AccelZ,GForceX,GForceY,GForceZ,GyroX,GyroY,GyroZ,MagX,MagY,MagZ,Cadence,Steps"
         if sensorConnected {
             header += witCSVHeader()
+        }
+        if airpodsConnected {
+            header += airpodsCSVHeader()
         }
         var csvString = header + "\n"
 
@@ -81,6 +85,9 @@ struct CSVManager {
 
             if sensorConnected {
                 row += witCSVRow(for: frame)
+            }
+            if airpodsConnected {
+                row += airpodsCSVRow(for: frame)
             }
             csvString.append(row + "\n")
         }
@@ -105,7 +112,29 @@ struct CSVManager {
         let wY  = String(format: "%.2f", frame.witYaw ?? 0.0)
         return ",\(wAx),\(wAy),\(wAz),\(wAsx),\(wAsy),\(wAsz),\(wR),\(wP),\(wY)"
     }
-    
+
+    //AirPods sensor header
+    static func airpodsCSVHeader() -> String {
+        return ",AirPods_Roll,AirPods_Pitch,AirPods_Yaw,AirPods_AccelX,AirPods_AccelY,AirPods_AccelZ,AirPods_GravityX,AirPods_GravityY,AirPods_GravityZ,AirPods_GyroX,AirPods_GyroY,AirPods_GyroZ"
+    }
+
+    //AirPods CSV Row
+    static func airpodsCSVRow(for frame: SensorFrame) -> String {
+        let aR  = String(format: "%.4f", frame.airpodsRoll ?? 0.0)
+        let aP  = String(format: "%.4f", frame.airpodsPitch ?? 0.0)
+        let aY  = String(format: "%.4f", frame.airpodsYaw ?? 0.0)
+        let aAx = String(format: "%.4f", frame.airpodsAccelX ?? 0.0)
+        let aAy = String(format: "%.4f", frame.airpodsAccelY ?? 0.0)
+        let aAz = String(format: "%.4f", frame.airpodsAccelZ ?? 0.0)
+        let aGx = String(format: "%.4f", frame.airpodsGravityX ?? 0.0)
+        let aGy = String(format: "%.4f", frame.airpodsGravityY ?? 0.0)
+        let aGz = String(format: "%.4f", frame.airpodsGravityZ ?? 0.0)
+        let aRx = String(format: "%.4f", frame.airpodsGyroX ?? 0.0)
+        let aRy = String(format: "%.4f", frame.airpodsGyroY ?? 0.0)
+        let aRz = String(format: "%.4f", frame.airpodsGyroZ ?? 0.0)
+        return ",\(aR),\(aP),\(aY),\(aAx),\(aAy),\(aAz),\(aGx),\(aGy),\(aGz),\(aRx),\(aRy),\(aRz)"
+    }
+
     //iOS share sheet helper
     private static func share(items: [Any]) {
         DispatchQueue.main.async {

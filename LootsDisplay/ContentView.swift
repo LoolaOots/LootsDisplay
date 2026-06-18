@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject var sensors = SensorManager()
     @StateObject var btManager = BluetoothManager()
+    @StateObject var airpodsManager = AirPodsMotionManager()
     @State private var isDurationExpanded = false
     @State private var isDelayExpanded = false
     
@@ -180,6 +181,45 @@ struct ContentView: View {
                             }
                         }
                         
+                        //airpods sensor data
+                        //paywall
+                        if store.isProUnlocked {
+                            Section(header: Text("section.airpods_sensor")) {
+                                HStack {
+                                    Image(systemName: airpodsManager.isConnected ? "airpodspro" : "airpodspro.slash")
+                                        .foregroundColor(.accentColor)
+                                    if airpodsManager.isConnected {
+                                        Text("sensor.airpods_connected")
+                                            .foregroundColor(.primary)
+                                    } else {
+                                        Text("sensor.airpods_not_connected")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                }
+                            }
+                        } else {
+                            Section(header: Text("section.airpods_sensor")) {
+                                Button {
+                                    showPaywall = true
+                                } label: {
+                                    HStack {
+                                        Text("sensor.airpods_not_connected")
+                                            .foregroundColor(.blue)
+                                        Spacer()
+                                        PremiumBadge()
+                                    }
+                                }
+                                .sheet(isPresented: $showPaywall) {
+                                    PaywallView()
+                                }
+                            }
+                        }
+
+                        if store.isProUnlocked && airpodsManager.isConnected {
+                            AirPodsDataView(manager: airpodsManager)
+                        }
+
                         //phone live view data
                         PhoneDataView(sensors: sensors)
                     }
@@ -232,7 +272,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("nav.live_sensor_data")
-            .onAppear { sensors.startAllSensors(with: btManager) }
+            .onAppear { sensors.startAllSensors(with: btManager, airpodsManager: airpodsManager) }
             .alert("alert.recording_limit.title", isPresented: $sensors.showLimitAlert) {
                 Button("btn.ok", role: .cancel) {
                     sensors.showLimitAlert = false

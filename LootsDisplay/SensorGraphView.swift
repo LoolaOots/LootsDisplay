@@ -13,7 +13,13 @@ enum SensorType: String, CaseIterable, Identifiable {
     case witAccX = "WIT Accel X", witAccY = "WIT Accel Y", witAccZ = "WIT Accel Z"
     case witRoll = "WIT Roll", witPitch = "WIT Pitch", witYaw = "WIT Yaw"
     case witAsX = "WIT AsX", witAsY = "WIT AsY", witAsZ = "WIT AsZ"
-    
+
+    //AirPods Sensor Data
+    case airpodsRoll = "AirPods Roll", airpodsPitch = "AirPods Pitch", airpodsYaw = "AirPods Yaw"
+    case airpodsAccelX = "AirPods Accel X", airpodsAccelY = "AirPods Accel Y", airpodsAccelZ = "AirPods Accel Z"
+    case airpodsGravityX = "AirPods Gravity X", airpodsGravityY = "AirPods Gravity Y", airpodsGravityZ = "AirPods Gravity Z"
+    case airpodsGyroX = "AirPods Gyro X", airpodsGyroY = "AirPods Gyro Y", airpodsGyroZ = "AirPods Gyro Z"
+
     var id: String { self.rawValue }
 
     var localizedName: LocalizedStringKey {
@@ -47,6 +53,18 @@ enum SensorType: String, CaseIterable, Identifiable {
         case .witAsX:   return "sensor.wit_as_x"
         case .witAsY:   return "sensor.wit_as_y"
         case .witAsZ:   return "sensor.wit_as_z"
+        case .airpodsRoll:     return "sensor.airpods_roll"
+        case .airpodsPitch:    return "sensor.airpods_pitch"
+        case .airpodsYaw:      return "sensor.airpods_yaw"
+        case .airpodsAccelX:   return "sensor.airpods_accel_x"
+        case .airpodsAccelY:   return "sensor.airpods_accel_y"
+        case .airpodsAccelZ:   return "sensor.airpods_accel_z"
+        case .airpodsGravityX: return "sensor.airpods_gravity_x"
+        case .airpodsGravityY: return "sensor.airpods_gravity_y"
+        case .airpodsGravityZ: return "sensor.airpods_gravity_z"
+        case .airpodsGyroX:    return "sensor.airpods_gyro_x"
+        case .airpodsGyroY:    return "sensor.airpods_gyro_y"
+        case .airpodsGyroZ:    return "sensor.airpods_gyro_z"
         }
     }
     
@@ -94,6 +112,20 @@ enum SensorType: String, CaseIterable, Identifiable {
         case .witAsX: return Color.pink.opacity(0.5)
         case .witAsY: return Color.mint.opacity(0.5)
         case .witAsZ: return Color.teal.opacity(0.5)
+
+        //AirPods Sensor Data
+        case .airpodsRoll: return Color.purple.opacity(0.8)
+        case .airpodsPitch: return Color.yellow.opacity(0.8)
+        case .airpodsYaw: return Color.cyan.opacity(0.8)
+        case .airpodsAccelX: return Color.red.opacity(0.8)
+        case .airpodsAccelY: return Color.green.opacity(0.8)
+        case .airpodsAccelZ: return Color.blue.opacity(0.8)
+        case .airpodsGravityX: return Color.indigo.opacity(0.8)
+        case .airpodsGravityY: return Color.brown.opacity(0.8)
+        case .airpodsGravityZ: return Color.black.opacity(0.8)
+        case .airpodsGyroX: return Color.pink.opacity(0.8)
+        case .airpodsGyroY: return Color.mint.opacity(0.8)
+        case .airpodsGyroZ: return Color.teal.opacity(0.8)
         }
     }
 }
@@ -263,6 +295,56 @@ struct SensorGraphView: View {
                                 LineMark(x: .value("Time", index), y: .value("WIT AsZ", val))
                                     .foregroundStyle(by: .value("Series", "WIT AsZ"))
                             }
+
+                            //AirPods Sensor
+                            if selectedTypes.contains(.airpodsRoll), let val = frame.airpodsRoll {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Roll", val * 180 / .pi))
+                                    .foregroundStyle(by: .value("Series", "AirPods Roll"))
+                            }
+                            if selectedTypes.contains(.airpodsPitch), let val = frame.airpodsPitch {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Pitch", val * 180 / .pi))
+                                    .foregroundStyle(by: .value("Series", "AirPods Pitch"))
+                            }
+                            if selectedTypes.contains(.airpodsYaw), let val = frame.airpodsYaw {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Yaw", val * 180 / .pi))
+                                    .foregroundStyle(by: .value("Series", "AirPods Yaw"))
+                            }
+                            if selectedTypes.contains(.airpodsAccelX), let val = frame.airpodsAccelX {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Accel X", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Accel X"))
+                            }
+                            if selectedTypes.contains(.airpodsAccelY), let val = frame.airpodsAccelY {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Accel Y", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Accel Y"))
+                            }
+                            if selectedTypes.contains(.airpodsAccelZ), let val = frame.airpodsAccelZ {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Accel Z", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Accel Z"))
+                            }
+                            if selectedTypes.contains(.airpodsGravityX), let val = frame.airpodsGravityX {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Gravity X", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Gravity X"))
+                            }
+                            if selectedTypes.contains(.airpodsGravityY), let val = frame.airpodsGravityY {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Gravity Y", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Gravity Y"))
+                            }
+                            if selectedTypes.contains(.airpodsGravityZ), let val = frame.airpodsGravityZ {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Gravity Z", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Gravity Z"))
+                            }
+                            if selectedTypes.contains(.airpodsGyroX), let val = frame.airpodsGyroX {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Gyro X", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Gyro X"))
+                            }
+                            if selectedTypes.contains(.airpodsGyroY), let val = frame.airpodsGyroY {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Gyro Y", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Gyro Y"))
+                            }
+                            if selectedTypes.contains(.airpodsGyroZ), let val = frame.airpodsGyroZ {
+                                LineMark(x: .value("Time", index), y: .value("AirPods Gyro Z", val))
+                                    .foregroundStyle(by: .value("Series", "AirPods Gyro Z"))
+                            }
                         }
                     }
                     .chartForegroundStyleScale(domain: SensorType.allCases.map { $0.rawValue },
@@ -292,6 +374,16 @@ struct SensorGraphView: View {
                                           types: [.witAccX, .witAccY, .witAccZ, .witRoll, .witPitch, .witYaw, .witAsX, .witAsY, .witAsZ])
                     }
 
+                    //AirPods Sensor Data
+                    let airpodsConnected = session.frames.first?.airpodsAccelX != nil || session.frames.first?.airpodsYaw != nil
+                    if airpodsConnected {
+                        sensorToggleGroup(title: "group.airpods_sensor",
+                                          types: [.airpodsRoll, .airpodsPitch, .airpodsYaw,
+                                                  .airpodsAccelX, .airpodsAccelY, .airpodsAccelZ,
+                                                  .airpodsGravityX, .airpodsGravityY, .airpodsGravityZ,
+                                                  .airpodsGyroX, .airpodsGyroY, .airpodsGyroZ])
+                    }
+
                 }
             }
         }
@@ -312,6 +404,10 @@ struct SensorGraphView: View {
         case .witAccX, .witAccY, .witAccZ: return "g"
         case .witRoll, .witPitch, .witYaw: return "°"
         case .witAsX, .witAsY, .witAsZ: return "°/s"
+        case .airpodsRoll, .airpodsPitch, .airpodsYaw: return "°"
+        case .airpodsAccelX, .airpodsAccelY, .airpodsAccelZ: return "g"
+        case .airpodsGravityX, .airpodsGravityY, .airpodsGravityZ: return "g"
+        case .airpodsGyroX, .airpodsGyroY, .airpodsGyroZ: return "°/s"
         default: return ""
         }
     }

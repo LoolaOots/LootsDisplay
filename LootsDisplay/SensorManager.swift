@@ -46,6 +46,19 @@ struct SensorFrame: Codable {
     let witAsX: Double?
     let witAsY: Double?
     let witAsZ: Double?
+    // AirPods Motion Sensor Data
+    let airpodsRoll: Double?
+    let airpodsPitch: Double?
+    let airpodsYaw: Double?
+    let airpodsAccelX: Double?
+    let airpodsAccelY: Double?
+    let airpodsAccelZ: Double?
+    let airpodsGravityX: Double?
+    let airpodsGravityY: Double?
+    let airpodsGravityZ: Double?
+    let airpodsGyroX: Double?
+    let airpodsGyroY: Double?
+    let airpodsGyroZ: Double?
 }
 
 struct RecordingSession: Identifiable, Codable {
@@ -209,7 +222,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
-    func startAllSensors(with btManager: BluetoothManager) {
+    func startAllSensors(with btManager: BluetoothManager, airpodsManager: AirPodsMotionManager) {
         //live view for magnetometer
         if motionManager.isMagnetometerAvailable {
                 motionManager.magnetometerUpdateInterval = 0.1
@@ -245,6 +258,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     let totalY = motion.userAcceleration.y + motion.gravity.y
                     let totalZ = motion.userAcceleration.z + motion.gravity.z
                     let currentSpeed = self.locationManager.location?.speed ?? 0.0
+                    let airpodsAvailable = MainActor.assumeIsolated { SubscriptionManager.shared.isProUnlocked } && airpodsManager.isConnected
                     let frame = SensorFrame(
                         timestamp: Date(),
                         label: nil,
@@ -279,7 +293,20 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         witYaw: btManager.isConnected ? Double(btManager.angleZ) : nil,
                         witAsX: btManager.isConnected ? Double(btManager.asX) : nil,
                         witAsY: btManager.isConnected ? Double(btManager.asY) : nil,
-                        witAsZ: btManager.isConnected ? Double(btManager.asZ) : nil
+                        witAsZ: btManager.isConnected ? Double(btManager.asZ) : nil,
+                        //AirPods Sensor Data (pro feature)
+                        airpodsRoll: airpodsAvailable ? airpodsManager.roll : nil,
+                        airpodsPitch: airpodsAvailable ? airpodsManager.pitch : nil,
+                        airpodsYaw: airpodsAvailable ? airpodsManager.yaw : nil,
+                        airpodsAccelX: airpodsAvailable ? airpodsManager.accelX : nil,
+                        airpodsAccelY: airpodsAvailable ? airpodsManager.accelY : nil,
+                        airpodsAccelZ: airpodsAvailable ? airpodsManager.accelZ : nil,
+                        airpodsGravityX: airpodsAvailable ? airpodsManager.gravityX : nil,
+                        airpodsGravityY: airpodsAvailable ? airpodsManager.gravityY : nil,
+                        airpodsGravityZ: airpodsAvailable ? airpodsManager.gravityZ : nil,
+                        airpodsGyroX: airpodsAvailable ? airpodsManager.gyroX : nil,
+                        airpodsGyroY: airpodsAvailable ? airpodsManager.gyroY : nil,
+                        airpodsGyroZ: airpodsAvailable ? airpodsManager.gyroZ : nil
                     )
                     self.recordedData.append(frame)
                 }
@@ -319,7 +346,7 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.startUpdatingLocation()
         locationManager.startUpdatingHeading()
 
-
+        airpodsManager.startUpdates()
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -349,7 +376,11 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     steps: frame.steps,
                     witAccX: frame.witAccX, witAccY: frame.witAccY, witAccZ: frame.witAccZ,
                     witRoll: frame.witRoll, witPitch: frame.witPitch, witYaw: frame.witYaw,
-                    witAsX: frame.witAsX, witAsY: frame.witAsY, witAsZ: frame.witAsZ
+                    witAsX: frame.witAsX, witAsY: frame.witAsY, witAsZ: frame.witAsZ,
+                    airpodsRoll: frame.airpodsRoll, airpodsPitch: frame.airpodsPitch, airpodsYaw: frame.airpodsYaw,
+                    airpodsAccelX: frame.airpodsAccelX, airpodsAccelY: frame.airpodsAccelY, airpodsAccelZ: frame.airpodsAccelZ,
+                    airpodsGravityX: frame.airpodsGravityX, airpodsGravityY: frame.airpodsGravityY, airpodsGravityZ: frame.airpodsGravityZ,
+                    airpodsGyroX: frame.airpodsGyroX, airpodsGyroY: frame.airpodsGyroY, airpodsGyroZ: frame.airpodsGyroZ
                 )
             }
             
