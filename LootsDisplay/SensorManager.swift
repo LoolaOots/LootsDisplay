@@ -65,7 +65,8 @@ struct RecordingSession: Identifiable, Codable {
     var id = UUID()
     let startTime: Date
     var frames: [SensorFrame]
-    
+    var videoFileName: String? = nil
+
     var title: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short

@@ -73,6 +73,40 @@ final class LocalFileManagerTests: XCTestCase {
         XCTAssertEqual(sessions.last?.id, oldSession.id)
     }
 
+    func testAttachVideo_MovesFileAndReturnsFileNameMatchingSessionId() {
+        // Arrange
+        let session = RecordingSession(id: UUID(), startTime: Date(), frames: [])
+        LocalFileManager.saveSession(session)
+
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mov")
+        try? "fake video bytes".data(using: .utf8)?.write(to: tempURL)
+
+        // Act
+        let fileName = LocalFileManager.attachVideo(from: tempURL, toSessionId: session.id)
+
+        // Assert
+        XCTAssertNotNil(fileName)
+        XCTAssertEqual(fileName, "\(session.id).mov")
+        XCTAssertNotNil(LocalFileManager.videoURL(for: session.id))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: tempURL.path), "Source temp file should have been moved, not copied.")
+    }
+
+    func testDeleteSession_AlsoRemovesAttachedVideo() {
+        // Arrange
+        let session = RecordingSession(id: UUID(), startTime: Date(), frames: [])
+        LocalFileManager.saveSession(session)
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mov")
+        try? "fake video bytes".data(using: .utf8)?.write(to: tempURL)
+        _ = LocalFileManager.attachVideo(from: tempURL, toSessionId: session.id)
+        XCTAssertNotNil(LocalFileManager.videoURL(for: session.id))
+
+        // Act
+        LocalFileManager.deleteSession(id: session.id)
+
+        // Assert
+        XCTAssertNil(LocalFileManager.videoURL(for: session.id), "Video file should be deleted alongside the session JSON.")
+    }
+
     // MARK: - Helpers
     
     private func clearAllStoredFiles() {
