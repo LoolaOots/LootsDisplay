@@ -23,12 +23,23 @@ final class GlassesManager: NSObject, ObservableObject {
             do { try MWDATCore.Wearables.configure() }
             catch MWDATCore.WearablesError.alreadyConfigured { }
 
-            // 2. Pair mock device after configure (SDK must be initialised first).
+            // 2. Pair mock device after configure, then simulate it being worn and powered on.
+            //    The SDK requires powerOn() + don() + unfold() before a session is eligible.
             #if DEBUG
-            if isMockDeviceKitEnabled && isMockDevicePaired
-                && MWDATMockDevice.MockDeviceKit.shared.pairedDevices.isEmpty {
-                _ = MWDATMockDevice.MockDeviceKit.shared.pairRaybanMeta()
-                print("GlassesManager: mock device paired, pairedDevices=\(MWDATMockDevice.MockDeviceKit.shared.pairedDevices.count)")
+            if isMockDeviceKitEnabled && isMockDevicePaired {
+                let glasses: any MWDATMockDevice.MockDisplaylessGlasses
+                if MWDATMockDevice.MockDeviceKit.shared.pairedDevices.isEmpty {
+                    glasses = MWDATMockDevice.MockDeviceKit.shared.pairRaybanMeta()
+                    print("GlassesManager: paired new mock device \(glasses.deviceIdentifier)")
+                } else {
+                    let existing = MWDATMockDevice.MockDeviceKit.shared.pairedDevices[0]
+                    glasses = existing as! any MWDATMockDevice.MockDisplaylessGlasses
+                    print("GlassesManager: using existing mock device \(glasses.deviceIdentifier)")
+                }
+                glasses.powerOn()
+                glasses.unfold()
+                glasses.don()
+                print("GlassesManager: mock device powered on, unfolded, donned")
             }
             #endif
 
