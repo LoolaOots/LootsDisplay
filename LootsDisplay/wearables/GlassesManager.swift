@@ -43,41 +43,70 @@ final class GlassesManager: NSObject, ObservableObject {
             }
             #endif
 
-            // 3. Run startRegistration — this populates Wearables.shared.devices.
+            // 3. Run startRegistration — this kicks off device registration.
             //    With initiallyRegistered=false (our mock config) the mock handles it
             //    without Meta AI. Catch alreadyRegistered as a safety net.
             do {
                 try await MWDATCore.Wearables.shared.startRegistration()
-                print("GlassesManager: registration succeeded, devices=\(MWDATCore.Wearables.shared.devices)")
+                print("GlassesManager: registration succeeded")
             } catch MWDATCore.RegistrationError.alreadyRegistered {
-                print("GlassesManager: already registered, devices=\(MWDATCore.Wearables.shared.devices)")
+                print("GlassesManager: already registered")
             }
 
-            // 4. Build device selector. For mock: fall back to the paired device ID
-            //    directly if Wearables.shared.devices is still empty (timing safety net).
+            // 4. Device registration/connection propagates asynchronously — the device
+            //    is NOT in Wearables.shared.devices the instant startRegistration() returns.
+            //    Wait for it to appear before creating a session, else start() throws
+            //    noEligibleDevice (no device in a connected link state yet).
+            let device = await waitForDevice(timeout: 8.0)
+            print("GlassesManager: device after wait=\(String(describing: device)), devices=\(MWDATCore.Wearables.shared.devices)")
+
             let selector: any MWDATCore.DeviceSelector
-            #if DEBUG
-            if isMockDeviceKitEnabled,
-               MWDATCore.Wearables.shared.devices.isEmpty,
-               let mockDevice = MWDATMockDevice.MockDeviceKit.shared.pairedDevices.first {
-                print("GlassesManager: devices empty — using SpecificDeviceSelector for \(mockDevice.deviceIdentifier)")
-                selector = MWDATCore.SpecificDeviceSelector(device: mockDevice.deviceIdentifier)
+            if let device {
+                selector = MWDATCore.SpecificDeviceSelector(device: device)
             } else {
                 selector = MWDATCore.AutoDeviceSelector(wearables: MWDATCore.Wearables.shared)
             }
-            #else
-            selector = MWDATCore.AutoDeviceSelector(wearables: MWDATCore.Wearables.shared)
-            #endif
 
+            // 5. Create the session and start it, retrying while the link settles into
+            //    a connected/eligible state.
             print("GlassesManager: creating session, activeDevice=\(String(describing: selector.activeDevice))")
             let newSession = try MWDATCore.Wearables.shared.createSession(deviceSelector: selector)
-            try newSession.start()
+            try await startSessionWithRetry(newSession, attempts: 10, delay: 0.5)
             session = newSession
             isConnected = true
         } catch {
             print("GlassesManager: connect failed: \(error)")
             isConnected = false
         }
+    }
+
+    /// Waits until a device appears in `Wearables.shared.devices`, returning the first
+    /// one. Returns nil if none appears within `timeout` seconds.
+    private func waitForDevice(timeout: TimeInterval) async -> MWDATCore.DeviceIdentifier? {
+        if let existing = MWDATCore.Wearables.shared.devices.first { return existing }
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if let device = MWDATCore.Wearables.shared.devices.first { return device }
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2s
+        }
+        return MWDATCore.Wearables.shared.devices.first
+    }
+
+    /// Starts the session, retrying while the device link settles into an eligible
+    /// (connected) state. Rethrows the last error if all attempts fail.
+    private func startSessionWithRetry(_ session: MWDATCore.DeviceSession, attempts: Int, delay: TimeInterval) async throws {
+        var lastError: Error?
+        for attempt in 1...attempts {
+            do {
+                try session.start()
+                return
+            } catch MWDATCore.DeviceSessionError.noEligibleDevice {
+                lastError = MWDATCore.DeviceSessionError.noEligibleDevice
+                print("GlassesManager: start attempt \(attempt)/\(attempts) — noEligibleDevice, retrying")
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            }
+        }
+        if let lastError { throw lastError }
     }
 
     func startVideoCapture() {
