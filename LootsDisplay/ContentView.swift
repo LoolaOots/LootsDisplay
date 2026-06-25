@@ -187,8 +187,8 @@ struct ContentView: View {
                         if store.isProUnlocked {
                             Section(header: Text("section.airpods_sensor")) {
                                 HStack {
-                                    Image(systemName: airpodsManager.isConnected ? "airpodspro" : "airpodspro.slash")
-                                        .foregroundColor(.accentColor)
+                                    Image(systemName: "airpodspro")
+                                        .foregroundColor(airpodsManager.isConnected ? .accentColor : .secondary)
                                     if airpodsManager.isConnected {
                                         Text("sensor.airpods_connected")
                                             .foregroundColor(.primary)
@@ -225,7 +225,7 @@ struct ContentView: View {
                         //paywall
                         if store.isProUnlocked {
                             Section(header: Text("section.glasses")) {
-                                NavigationLink(destination: GlassesDeviceView(glassesManager: glassesManager)) {
+                                NavigationLink(destination: GlassesDeviceView(glassesManager: glassesManager, btManager: btManager)) {
                                     HStack {
                                         Image(systemName: glassesManager.isConnected ? "eyeglasses" : "eyeglasses.slash")
                                             .foregroundColor(glassesManager.isConnected ? .green : .secondary)
@@ -306,7 +306,6 @@ struct ContentView: View {
             }
             .navigationTitle("nav.live_sensor_data")
             .onAppear {
-                glassesManager.configureSDK()
                 sensors.startAllSensors(with: btManager, airpodsManager: airpodsManager, glassesManager: glassesManager)
             }
             .alert("alert.recording_limit.title", isPresented: $sensors.showLimitAlert) {

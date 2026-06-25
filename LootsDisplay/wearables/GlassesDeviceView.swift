@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GlassesDeviceView: View {
     @ObservedObject var glassesManager: GlassesManager
+    @ObservedObject var btManager: BluetoothManager
     @State private var isConnecting = false
     @State private var permissionDenied = false
 
@@ -15,8 +16,16 @@ struct GlassesDeviceView: View {
                             .foregroundColor(.green)
                         Text("Mock Device Kit enabled")
                     }
-                    Button("Pair Mock Ray-Ban Meta") {
-                        glassesManager.pairMockRaybanMeta()
+                    if glassesManager.isMockDevicePaired {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.blue)
+                            Text("Ray-Ban Meta paired")
+                        }
+                    } else {
+                        Button("Pair Mock Ray-Ban Meta") {
+                            glassesManager.pairMockRaybanMeta()
+                        }
                     }
                 } else {
                     Button("Enable Mock Device Kit") {
@@ -61,6 +70,11 @@ struct GlassesDeviceView: View {
             }
         }
         .navigationTitle("Meta Glasses")
+        .onAppear {
+            // Trigger iOS Bluetooth permission dialog on screen entry,
+            // same as BluetoothDeviceView does for WitMotion.
+            btManager.requestBluetoothAccess()
+        }
         .alert("Camera Permission Needed", isPresented: $permissionDenied) {
             Button("OK", role: .cancel) {}
         } message: {

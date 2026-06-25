@@ -17,20 +17,25 @@ final class GlassesManager: NSObject, ObservableObject {
     private var frameListenerToken: (any MWDATCore.AnyListenerToken)?
     private var videoFileWriter: VideoFileWriter?
 
-    /// Must be called once, before any other GlassesManager method (e.g. from LootsDisplayApp at launch).
-    func configureSDK() {
-        do {
-            try MWDATCore.Wearables.configure()
-        } catch {
-            print("GlassesManager: configure failed: \(error)")
-        }
-    }
-
     func connect() async {
         do {
-            if MWDATCore.Wearables.shared.registrationState != .registered {
-                try await MWDATCore.Wearables.shared.startRegistration()
+            // Configure SDK now (after mock may have been enabled in DEBUG).
+            // alreadyConfigured is fine — idempotent.
+            do {
+                try MWDATCore.Wearables.configure()
+            } catch MWDATCore.WearablesError.alreadyConfigured {
+                // already set up from a previous call
             }
+
+            // Register if not yet registered (mock with initiallyRegistered=true skips this).
+            if MWDATCore.Wearables.shared.registrationState != .registered {
+                do {
+                    try await MWDATCore.Wearables.shared.startRegistration()
+                } catch MWDATCore.RegistrationError.alreadyRegistered {
+                    // fine
+                }
+            }
+
             let selector = MWDATCore.AutoDeviceSelector(wearables: MWDATCore.Wearables.shared)
             let newSession = try MWDATCore.Wearables.shared.createSession(deviceSelector: selector)
             try newSession.start()
@@ -43,6 +48,11 @@ final class GlassesManager: NSObject, ObservableObject {
     }
 
     func requestCameraPermission() async -> Bool {
+        // Configure SDK if not yet done (needed before Wearables.shared is usable).
+        do { try MWDATCore.Wearables.configure() }
+        catch MWDATCore.WearablesError.alreadyConfigured { }
+        catch { print("GlassesManager: configure failed: \(error)"); return false }
+
         do {
             let status = try await MWDATCore.Wearables.shared.requestPermission(.camera)
             return status == .granted
@@ -90,18 +100,22 @@ final class GlassesManager: NSObject, ObservableObject {
     }
 
     #if DEBUG
-    var isMockDeviceKitEnabled: Bool {
-        MWDATMockDevice.MockDeviceKit.shared.isEnabled
-    }
+    @Published private(set) var isMockDeviceKitEnabled = false
+    @Published private(set) var isMockDevicePaired = false
 
     func enableMockDeviceKit() {
         MWDATMockDevice.MockDeviceKit.shared.enable()
+        isMockDeviceKitEnabled = true
     }
 
     @discardableResult
     func pairMockRaybanMeta() -> Bool {
-        guard MWDATMockDevice.MockDeviceKit.shared.pairedDevices.isEmpty else { return false }
+        if !MWDATMockDevice.MockDeviceKit.shared.pairedDevices.isEmpty {
+            isMockDevicePaired = true
+            return false // already paired
+        }
         _ = MWDATMockDevice.MockDeviceKit.shared.pairRaybanMeta()
+        isMockDevicePaired = true
         return true
     }
     #endif
