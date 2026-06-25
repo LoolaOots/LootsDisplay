@@ -137,7 +137,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     private var recordingTimer: Timer?
     private var secondsTimer: Timer? //Timer for the UI counter
-    
+    private var glassesManager: GlassesManager?
+
     override init() {
         let savedLimit = UserDefaults.standard.integer(forKey: limitKey)
         self.recordingLimit = savedLimit > 0 ? savedLimit : 45
@@ -170,12 +171,20 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         sessionSteps = 0
         recordingStartSteps = latestTotalSteps
         isRecording = true
-            
+
+        if let glassesManager {
+            Task { @MainActor [weak glassesManager] in
+                guard let glassesManager, glassesManager.isConnected,
+                      SubscriptionManager.shared.isProUnlocked else { return }
+                glassesManager.startVideoCapture()
+            }
+        }
+
         //dynamic limit set by the slider
         recordingTimer = Timer.scheduledTimer(withTimeInterval: Double(recordingLimit), repeats: false) { _ in
             self.stopRecording()
         }
-            
+
         secondsTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             if self.secondsElapsed < self.recordingLimit {
                 self.secondsElapsed += 1
@@ -187,17 +196,28 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         isRecording = false
         recordingTimer?.invalidate()
         secondsTimer?.invalidate()
-        
+        recordingTimer = nil
+        secondsTimer = nil
+
         //Save the finished recording as a session
+        var savedSessionId: UUID?
         if !recordedData.isEmpty {
             let newSession = RecordingSession(startTime: Date().addingTimeInterval(-Double(secondsElapsed)), frames: recordedData)
             LocalFileManager.saveSession(newSession)
             self.sessions = LocalFileManager.loadSessions()
+            savedSessionId = newSession.id
         }
-        
-        recordingTimer = nil
-        secondsTimer = nil
         print("Stopped! Captured \(recordedData.count) samples.")
+
+        if let glassesManager {
+            let capturedSessionId = savedSessionId
+            Task { @MainActor [weak self] in
+                guard let tempVideoURL = await glassesManager.stopVideoCapture() else { return }
+                guard let id = capturedSessionId else { return }
+                LocalFileManager.attachVideo(from: tempVideoURL, toSessionId: id)
+                self?.sessions = LocalFileManager.loadSessions()
+            }
+        }
     }
     
     func deleteSession(at offsets: IndexSet) {
@@ -223,7 +243,8 @@ class SensorManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
-    func startAllSensors(with btManager: BluetoothManager, airpodsManager: AirPodsMotionManager) {
+    func startAllSensors(with btManager: BluetoothManager, airpodsManager: AirPodsMotionManager, glassesManager: GlassesManager) {
+        self.glassesManager = glassesManager
         //live view for magnetometer
         if motionManager.isMagnetometerAvailable {
                 motionManager.magnetometerUpdateInterval = 0.1
