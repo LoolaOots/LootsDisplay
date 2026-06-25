@@ -23,15 +23,34 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXBuildFile section */
+		D0EDF0952F0D00000038104A /* MWDATCore in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0922F0D00000038104A /* MWDATCore */; };
+		D0EDF0962F0D00000038104A /* MWDATCamera in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0932F0D00000038104A /* MWDATCamera */; };
+		D0EDF0972F0D00000038104A /* MWDATMockDevice in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0942F0D00000038104A /* MWDATMockDevice */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		D0EDF01C2F0189F60038104A /* LootsDisplay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LootsDisplay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0EDF0292F0189F70038104A /* LootsDisplayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LootsDisplayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0EDF0332F0189F70038104A /* LootsDisplayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LootsDisplayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D0EDF0902F0C9D610038104A /* Exceptions for "LootsDisplay" folder in "LootsDisplay" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D0EDF01B2F0189F60038104A /* LootsDisplay */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D0EDF01E2F0189F60038104A /* LootsDisplay */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D0EDF0902F0C9D610038104A /* Exceptions for "LootsDisplay" folder in "LootsDisplay" target */,
+			);
 			path = LootsDisplay;
 			sourceTree = "<group>";
 		};
@@ -57,6 +76,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0EDF0952F0D00000038104A /* MWDATCore in Frameworks */,
+				D0EDF0962F0D00000038104A /* MWDATCamera in Frameworks */,
+				D0EDF0972F0D00000038104A /* MWDATMockDevice in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +141,9 @@
 			);
 			name = LootsDisplay;
 			packageProductDependencies = (
+				D0EDF0922F0D00000038104A /* MWDATCore */,
+				D0EDF0932F0D00000038104A /* MWDATCamera */,
+				D0EDF0942F0D00000038104A /* MWDATMockDevice */,
 			);
 			productName = LootsDisplay;
 			productReference = D0EDF01C2F0189F60038104A /* LootsDisplay.app */;
@@ -204,6 +229,9 @@
 			);
 			mainGroup = D0EDF0132F0189F60038104A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D0EDF0912F0D00000038104A /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D0EDF01D2F0189F60038104A /* Products */;
 			projectDirPath = "";
@@ -408,17 +436,8 @@
 				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 3N7CT94HF7;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = LabelSensorData;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app needs Bluetooth access to scan for WitMotion sensor devices.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location to display and record GPS data.";
-				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs motion data to display phone rotation, g-force and acceleration.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LootsDisplay/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -441,17 +460,8 @@
 				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 3N7CT94HF7;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = LabelSensorData;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app needs Bluetooth access to scan for WitMotion sensor devices.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location to display and record GPS data.";
-				INFOPLIST_KEY_NSMotionUsageDescription = "This app needs motion data to display phone rotation, g-force and acceleration.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LootsDisplay/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -577,6 +587,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D0EDF0912F0D00000038104A /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/facebook/meta-wearables-dat-ios";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D0EDF0922F0D00000038104A /* MWDATCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D0EDF0912F0D00000038104A /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */;
+			productName = MWDATCore;
+		};
+		D0EDF0932F0D00000038104A /* MWDATCamera */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D0EDF0912F0D00000038104A /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */;
+			productName = MWDATCamera;
+		};
+		D0EDF0942F0D00000038104A /* MWDATMockDevice */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D0EDF0912F0D00000038104A /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */;
+			productName = MWDATMockDevice;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D0EDF0142F0189F60038104A /* Project object */;
 }
