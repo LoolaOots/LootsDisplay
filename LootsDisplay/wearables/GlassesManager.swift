@@ -19,23 +19,27 @@ final class GlassesManager: NSObject, ObservableObject {
 
     func connect() async {
         do {
-            // Configure SDK now (after mock may have been enabled in DEBUG).
-            // alreadyConfigured is fine — idempotent.
+            // 1. Configure SDK — must happen AFTER mock is enabled (if in DEBUG mock flow).
+            //    alreadyConfigured is fine on retry.
+            do { try MWDATCore.Wearables.configure() }
+            catch MWDATCore.WearablesError.alreadyConfigured { }
+
+            #if DEBUG
+            // 2. Pair mock device NOW, after configure — the SDK must be initialised first.
+            //    pairMockRaybanMeta() only sets isMockDevicePaired; the real SDK call is here.
+            if isMockDeviceKitEnabled && isMockDevicePaired
+                && MWDATMockDevice.MockDeviceKit.shared.pairedDevices.isEmpty {
+                _ = MWDATMockDevice.MockDeviceKit.shared.pairRaybanMeta()
+            }
+            #endif
+
+            // 3. Always call startRegistration — this populates Wearables.shared.devices.
+            //    Mock with initiallyRegistered=true throws alreadyRegistered, which is fine.
             do {
-                try MWDATCore.Wearables.configure()
-            } catch MWDATCore.WearablesError.alreadyConfigured {
-                // already set up from a previous call
-            }
+                try await MWDATCore.Wearables.shared.startRegistration()
+            } catch MWDATCore.RegistrationError.alreadyRegistered { }
 
-            // Register if not yet registered (mock with initiallyRegistered=true skips this).
-            if MWDATCore.Wearables.shared.registrationState != .registered {
-                do {
-                    try await MWDATCore.Wearables.shared.startRegistration()
-                } catch MWDATCore.RegistrationError.alreadyRegistered {
-                    // fine
-                }
-            }
-
+            // 4. Create and start session.
             let selector = MWDATCore.AutoDeviceSelector(wearables: MWDATCore.Wearables.shared)
             let newSession = try MWDATCore.Wearables.shared.createSession(deviceSelector: selector)
             try newSession.start()
@@ -48,7 +52,6 @@ final class GlassesManager: NSObject, ObservableObject {
     }
 
     func requestCameraPermission() async -> Bool {
-        // Configure SDK if not yet done (needed before Wearables.shared is usable).
         do { try MWDATCore.Wearables.configure() }
         catch MWDATCore.WearablesError.alreadyConfigured { }
         catch { print("GlassesManager: configure failed: \(error)"); return false }
@@ -101,6 +104,7 @@ final class GlassesManager: NSObject, ObservableObject {
 
     #if DEBUG
     @Published private(set) var isMockDeviceKitEnabled = false
+    // Tracks user intent only — actual SDK pairRaybanMeta() is called in connect() after configure().
     @Published private(set) var isMockDevicePaired = false
 
     func enableMockDeviceKit() {
@@ -110,11 +114,9 @@ final class GlassesManager: NSObject, ObservableObject {
 
     @discardableResult
     func pairMockRaybanMeta() -> Bool {
-        if !MWDATMockDevice.MockDeviceKit.shared.pairedDevices.isEmpty {
-            isMockDevicePaired = true
-            return false // already paired
-        }
-        _ = MWDATMockDevice.MockDeviceKit.shared.pairRaybanMeta()
+        guard !isMockDevicePaired else { return false }
+        // Actual SDK pairRaybanMeta() is deferred to connect() which runs after configure().
+        // The SDK requires configure() to be called before pairRaybanMeta().
         isMockDevicePaired = true
         return true
     }
