@@ -4,7 +4,6 @@ struct GlassesDeviceView: View {
     @ObservedObject var glassesManager: GlassesManager
     @ObservedObject var btManager: BluetoothManager
     @State private var isConnecting = false
-    @State private var permissionDenied = false
 
     var body: some View {
         List {
@@ -56,12 +55,7 @@ struct GlassesDeviceView: View {
                     Button("Connect Glasses") {
                         Task {
                             isConnecting = true
-                            let granted = await glassesManager.requestCameraPermission()
-                            if granted {
-                                await glassesManager.connect()
-                            } else {
-                                permissionDenied = true
-                            }
+                            await glassesManager.connect()
                             isConnecting = false
                         }
                     }
@@ -71,14 +65,7 @@ struct GlassesDeviceView: View {
         }
         .navigationTitle("Meta Glasses")
         .onAppear {
-            // Trigger iOS Bluetooth permission dialog on screen entry,
-            // same as BluetoothDeviceView does for WitMotion.
             btManager.requestBluetoothAccess()
-        }
-        .alert("Camera Permission Needed", isPresented: $permissionDenied) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("LootsDisplay needs camera access on your glasses to record video.")
         }
     }
 }
