@@ -4,6 +4,7 @@ struct ContentView: View {
     @StateObject var sensors = SensorManager()
     @StateObject var btManager = BluetoothManager()
     @StateObject var airpodsManager = AirPodsMotionManager()
+    @StateObject var glassesManager = GlassesManager()
     @State private var isDurationExpanded = false
     @State private var isDelayExpanded = false
     
@@ -220,6 +221,38 @@ struct ContentView: View {
                             AirPodsDataView(manager: airpodsManager)
                         }
 
+                        //glasses video data
+                        //paywall
+                        if store.isProUnlocked {
+                            Section(header: Text("section.glasses")) {
+                                NavigationLink(destination: GlassesDeviceView(glassesManager: glassesManager)) {
+                                    HStack {
+                                        Image(systemName: glassesManager.isConnected ? "eyeglasses" : "eyeglasses.slash")
+                                            .foregroundColor(glassesManager.isConnected ? .green : .secondary)
+                                        Text(glassesManager.isConnected ? "Glasses Connected" : "Pair Glasses")
+                                            .foregroundColor(glassesManager.isConnected ? .primary : .blue)
+                                        Spacer()
+                                    }
+                                }
+                            }
+                        } else {
+                            Section(header: Text("section.glasses")) {
+                                Button {
+                                    showPaywall = true
+                                } label: {
+                                    HStack {
+                                        Text("Pair Glasses")
+                                            .foregroundColor(.blue)
+                                        Spacer()
+                                        PremiumBadge()
+                                    }
+                                }
+                                .sheet(isPresented: $showPaywall) {
+                                    PaywallView()
+                                }
+                            }
+                        }
+
                         //phone live view data
                         PhoneDataView(sensors: sensors)
                     }
@@ -272,7 +305,10 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("nav.live_sensor_data")
-            .onAppear { sensors.startAllSensors(with: btManager, airpodsManager: airpodsManager) }
+            .onAppear {
+                glassesManager.configureSDK()
+                sensors.startAllSensors(with: btManager, airpodsManager: airpodsManager, glassesManager: glassesManager)
+            }
             .alert("alert.recording_limit.title", isPresented: $sensors.showLimitAlert) {
                 Button("btn.ok", role: .cancel) {
                     sensors.showLimitAlert = false
