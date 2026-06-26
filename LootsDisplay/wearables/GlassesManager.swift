@@ -11,6 +11,7 @@ import MWDATMockDevice
 final class GlassesManager: NSObject, ObservableObject {
     @Published private(set) var isConnected = false
     @Published private(set) var isRecording = false
+    @Published private(set) var cameraPermissionGranted = false
 
     private var session: MWDATCore.DeviceSession?
     private var stream: MWDATCamera.Stream?
@@ -69,9 +70,32 @@ final class GlassesManager: NSObject, ObservableObject {
             try await startSessionWithRetry(newSession, attempts: 10, delay: 0.5)
             session = newSession
             isConnected = true
+
+            // 6. Now that a device is connected, request camera access on the glasses.
+            //    Doing this here (rather than at record time) means the prompt appears
+            //    right after pairing, and PermissionError.noDevice can't occur.
+            await ensureCameraPermission()
         } catch {
             print("GlassesManager: connect failed: \(error)")
             isConnected = false
+        }
+    }
+
+    /// Requests camera permission on the connected glasses, if not already granted.
+    /// Must be called only after a device session is connected, else the SDK throws
+    /// PermissionError.noDevice.
+    private func ensureCameraPermission() async {
+        do {
+            let status = try await MWDATCore.Wearables.shared.checkPermissionStatus(.camera)
+            if status == .granted {
+                cameraPermissionGranted = true
+                return
+            }
+            let requested = try await MWDATCore.Wearables.shared.requestPermission(.camera)
+            cameraPermissionGranted = (requested == .granted)
+        } catch {
+            print("GlassesManager: camera permission request failed: \(error)")
+            cameraPermissionGranted = false
         }
     }
 

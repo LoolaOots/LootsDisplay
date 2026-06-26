@@ -51,6 +51,16 @@ struct GlassesDeviceView: View {
                     }
                 }
 
+                if glassesManager.isConnected {
+                    HStack {
+                        Image(systemName: glassesManager.cameraPermissionGranted ? "camera.fill" : "camera")
+                            .foregroundColor(glassesManager.cameraPermissionGranted ? .green : .secondary)
+                        Text(glassesManager.cameraPermissionGranted ? "Camera access granted" : "Camera access needed")
+                            .foregroundColor(glassesManager.cameraPermissionGranted ? .primary : .secondary)
+                        Spacer()
+                    }
+                }
+
                 if !glassesManager.isConnected {
                     Button("Connect Glasses") {
                         Task {
