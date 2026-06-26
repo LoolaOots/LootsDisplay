@@ -38,10 +38,6 @@ final class GlassesManager: NSObject, ObservableObject {
                 glasses.powerOn()
                 glasses.unfold()
                 glasses.don()
-                // The mock camera feed is backed by the phone's real camera, which
-                // needs iOS camera permission. Request it here so the system prompt
-                // appears at connect time rather than when recording starts.
-                _ = await AVCaptureDevice.requestAccess(for: .video)
                 // Give the mock camera a synthetic feed so video capture produces
                 // actual frames — without this, startVideoCapture() records nothing.
                 await glasses.services.camera.setCameraFeed(cameraFacing: .front)
