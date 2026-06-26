@@ -203,8 +203,14 @@ struct SessionRowView: View {
                     if let label = sessionLabel {
                         labelTag(label)
                     }
+
+                    if session.videoFileName != nil {
+                        Image(systemName: "video.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(.blue)
+                    }
                 }
-                
+
                 Text(String(format: String(localized: "session.frames_captured"), session.frames.count))
                     .font(.subheadline)
                     .foregroundColor(.secondary)

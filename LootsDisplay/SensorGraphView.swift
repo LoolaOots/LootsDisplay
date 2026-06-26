@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import AVKit
 
 enum SensorType: String, CaseIterable, Identifiable {
     case pitch = "Pitch", roll = "Roll", yaw = "Yaw", heading = "Heading"
@@ -162,7 +163,17 @@ struct SensorGraphView: View {
                     }
                     .padding(.vertical, 2)
                 }
-                
+
+                //Glasses video, if one was recorded for this session
+                if let videoURL = LocalFileManager.videoURL(for: session.id) {
+                    Section(header: Text("section.glasses_video")) {
+                        VideoPlayer(player: AVPlayer(url: videoURL))
+                            .frame(height: 220)
+                            .cornerRadius(8)
+                            .listRowInsets(EdgeInsets())
+                    }
+                }
+
                 Section {
                     Chart {
                         ForEach(Array(session.frames.enumerated()), id: \.offset) { index, frame in
