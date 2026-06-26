@@ -9,36 +9,55 @@ struct CSVManager {
         
         do {
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-            
+
+            var items: [Any] = [tempDir]
             for session in selectedSessions {
                 let csvString = generateCSVString(for: session)
-                
+
                 let fileName = fileName(for: session)
                 let fileURL = tempDir.appendingPathComponent(fileName)
-                
+
                 try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+
+                if let videoURL = LocalFileManager.videoURL(for: session.id) {
+                    items.append(videoURL)
+                }
             }
-            
-            share(items: [tempDir])
-            
+
+            share(items: items)
+
         } catch {
             print("Bulk save failed: \(error)")
         }
     }
-    
+
     //single save
     static func exportSingleSessionAsCSV(_ session: RecordingSession) {
-        let csvString = generateCSVString(for: session)
-        
-        let fileName = fileName(for: session)
-        let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-        
         do {
-            try csvString.write(to: path, atomically: true, encoding: .utf8)
-            share(items: [path])
+            let items = try writeCSVAndCollectItems(for: session)
+            share(items: items)
         } catch {
             print("Failed to create CSV: \(error)")
         }
+    }
+
+    /// Items (CSV file URL, plus attached video URL if present) ready for the share sheet, without presenting it.
+    /// Exposed standalone so it's testable independent of UIActivityViewController.
+    static func exportItems(for session: RecordingSession) -> [Any] {
+        (try? writeCSVAndCollectItems(for: session)) ?? []
+    }
+
+    private static func writeCSVAndCollectItems(for session: RecordingSession) throws -> [Any] {
+        let csvString = generateCSVString(for: session)
+        let fileName = fileName(for: session)
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        try csvString.write(to: path, atomically: true, encoding: .utf8)
+
+        var items: [Any] = [path]
+        if let videoURL = LocalFileManager.videoURL(for: session.id) {
+            items.append(videoURL)
+        }
+        return items
     }
     
     static func fileName(for session: RecordingSession) -> String {

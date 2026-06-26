@@ -88,13 +88,46 @@ final class CSVManagerTests: XCTestCase {
 
     func testFileName_UsesDefaultWhenNoLabelExists() {
         let session = createMockSession(frameCount: 1, label: nil)
-        
+
         let generatedName = CSVManager.fileName(for: session)
-        
+
         XCTAssertTrue(generatedName.starts(with: "SensorLog"), "Should use 'SensorLog' if no label is found.")
     }
 
-    
+    func testExportItems_IncludesVideoURLWhenSessionHasAttachedVideo() {
+        // Arrange
+        LocalFileManager.setupFolder()
+        let session = createMockSession(frameCount: 1)
+        LocalFileManager.saveSession(session)
+        let videoTempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mov")
+        try? "fake video".data(using: .utf8)?.write(to: videoTempURL)
+        LocalFileManager.attachVideo(from: videoTempURL, toSessionId: session.id)
+        let sessionWithVideo = LocalFileManager.loadSessions().first { $0.id == session.id }!
+
+        // Act
+        let items = CSVManager.exportItems(for: sessionWithVideo)
+
+        // Assert
+        XCTAssertEqual(items.count, 2, "Should include both the CSV temp file and the attached video.")
+        XCTAssertTrue(items.contains { ($0 as? URL)?.pathExtension == "mov" })
+        XCTAssertTrue(items.contains { ($0 as? URL)?.pathExtension == "csv" })
+
+        LocalFileManager.deleteSession(id: session.id)
+    }
+
+    func testExportItems_OmitsVideoWhenSessionHasNone() {
+        // Arrange
+        let session = createMockSession(frameCount: 1)
+
+        // Act
+        let items = CSVManager.exportItems(for: session)
+
+        // Assert
+        XCTAssertEqual(items.count, 1)
+        XCTAssertTrue((items.first as? URL)?.pathExtension == "csv")
+    }
+
+
     private func createMockSession(frameCount: Int, label: String? = nil) -> RecordingSession {
         var frames: [SensorFrame] = []
         for _ in 0..<frameCount {
