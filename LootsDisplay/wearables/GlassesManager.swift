@@ -39,7 +39,10 @@ final class GlassesManager: NSObject, ObservableObject {
                 glasses.powerOn()
                 glasses.unfold()
                 glasses.don()
-                print("GlassesManager: mock device powered on, unfolded, donned")
+                // Give the mock camera a synthetic feed so video capture produces
+                // actual frames — without this, startVideoCapture() records nothing.
+                await glasses.services.camera.setCameraFeed(cameraFacing: .front)
+                print("GlassesManager: mock device powered on, unfolded, donned, camera feed set")
             }
             #endif
 
