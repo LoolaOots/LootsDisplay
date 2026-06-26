@@ -7,6 +7,22 @@ import MWDATCamera
 import MWDATMockDevice
 #endif
 
+/// Thread-safe counter for diagnosing the camera frame pipeline. The frame listener
+/// fires off the main actor, so counts are guarded by a lock.
+private final class FrameCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _total = 0
+    private var _withImageBuffer = 0
+
+    func record(hasImageBuffer: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        _total += 1
+        if hasImageBuffer { _withImageBuffer += 1 }
+    }
+    var total: Int { lock.lock(); defer { lock.unlock() }; return _total }
+    var withImageBuffer: Int { lock.lock(); defer { lock.unlock() }; return _withImageBuffer }
+}
+
 @MainActor
 final class GlassesManager: NSObject, ObservableObject {
     @Published private(set) var isConnected = false
@@ -15,7 +31,9 @@ final class GlassesManager: NSObject, ObservableObject {
     private var session: MWDATCore.DeviceSession?
     private var stream: MWDATCamera.Stream?
     private var frameListenerToken: (any MWDATCore.AnyListenerToken)?
+    private var streamErrorToken: (any MWDATCore.AnyListenerToken)?
     private var videoFileWriter: VideoFileWriter?
+    private var frameCounter: FrameCounter?
 
     func connect() async {
         do {
@@ -126,12 +144,21 @@ final class GlassesManager: NSObject, ObservableObject {
         let writer = VideoFileWriter(outputURL: outputURL)
         videoFileWriter = writer
 
+        let counter = FrameCounter()
+        frameCounter = counter
         frameListenerToken = newStream.videoFramePublisher.listen { [weak writer] frame in
+            let hasImageBuffer = CMSampleBufferGetImageBuffer(frame.sampleBuffer) != nil
+            counter.record(hasImageBuffer: hasImageBuffer)
             writer?.append(frame.sampleBuffer)
+        }
+        // Surface any stream-level errors (decode failures, permission, hinges, thermal).
+        streamErrorToken = newStream.errorPublisher.listen { error in
+            print("GlassesManager: stream error: \(error)")
         }
 
         Task { await newStream.start() }
         isRecording = true
+        print("GlassesManager: startVideoCapture — stream added and started")
     }
 
     func stopVideoCapture() async -> URL? {
@@ -140,13 +167,24 @@ final class GlassesManager: NSObject, ObservableObject {
         if let token = frameListenerToken {
             await token.cancel()
         }
+        if let token = streamErrorToken {
+            await token.cancel()
+        }
         frameListenerToken = nil
+        streamErrorToken = nil
         self.stream = nil
         isRecording = false
 
+        if let counter = frameCounter {
+            print("GlassesManager: stopVideoCapture — frames total=\(counter.total), withImageBuffer=\(counter.withImageBuffer)")
+        }
+        frameCounter = nil
+
         guard let writer = videoFileWriter else { return nil }
         videoFileWriter = nil
-        return await writer.finish()
+        let url = await writer.finish()
+        print("GlassesManager: writer.finish() returned \(String(describing: url))")
+        return url
     }
 
     #if DEBUG
