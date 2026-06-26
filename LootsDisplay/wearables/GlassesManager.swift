@@ -7,22 +7,6 @@ import MWDATCamera
 import MWDATMockDevice
 #endif
 
-/// Thread-safe counter for diagnosing the camera frame pipeline. The frame listener
-/// fires off the main actor, so counts are guarded by a lock.
-private final class FrameCounter: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _total = 0
-    private var _withImageBuffer = 0
-
-    func record(hasImageBuffer: Bool) {
-        lock.lock(); defer { lock.unlock() }
-        _total += 1
-        if hasImageBuffer { _withImageBuffer += 1 }
-    }
-    var total: Int { lock.lock(); defer { lock.unlock() }; return _total }
-    var withImageBuffer: Int { lock.lock(); defer { lock.unlock() }; return _withImageBuffer }
-}
-
 @MainActor
 final class GlassesManager: NSObject, ObservableObject {
     @Published private(set) var isConnected = false
@@ -33,7 +17,6 @@ final class GlassesManager: NSObject, ObservableObject {
     private var frameListenerToken: (any MWDATCore.AnyListenerToken)?
     private var streamErrorToken: (any MWDATCore.AnyListenerToken)?
     private var videoFileWriter: VideoFileWriter?
-    private var frameCounter: FrameCounter?
 
     func connect() async {
         do {
@@ -48,11 +31,8 @@ final class GlassesManager: NSObject, ObservableObject {
                 let glasses: any MWDATMockDevice.MockDisplaylessGlasses
                 if MWDATMockDevice.MockDeviceKit.shared.pairedDevices.isEmpty {
                     glasses = MWDATMockDevice.MockDeviceKit.shared.pairRaybanMeta()
-                    print("GlassesManager: paired new mock device \(glasses.deviceIdentifier)")
                 } else {
-                    let existing = MWDATMockDevice.MockDeviceKit.shared.pairedDevices[0]
-                    glasses = existing as! any MWDATMockDevice.MockDisplaylessGlasses
-                    print("GlassesManager: using existing mock device \(glasses.deviceIdentifier)")
+                    glasses = MWDATMockDevice.MockDeviceKit.shared.pairedDevices[0] as! any MWDATMockDevice.MockDisplaylessGlasses
                 }
                 glasses.powerOn()
                 glasses.unfold()
@@ -60,7 +40,6 @@ final class GlassesManager: NSObject, ObservableObject {
                 // Give the mock camera a synthetic feed so video capture produces
                 // actual frames — without this, startVideoCapture() records nothing.
                 await glasses.services.camera.setCameraFeed(cameraFacing: .front)
-                print("GlassesManager: mock device powered on, unfolded, donned, camera feed set")
             }
             #endif
 
@@ -69,17 +48,13 @@ final class GlassesManager: NSObject, ObservableObject {
             //    without Meta AI. Catch alreadyRegistered as a safety net.
             do {
                 try await MWDATCore.Wearables.shared.startRegistration()
-                print("GlassesManager: registration succeeded")
-            } catch MWDATCore.RegistrationError.alreadyRegistered {
-                print("GlassesManager: already registered")
-            }
+            } catch MWDATCore.RegistrationError.alreadyRegistered { }
 
             // 4. Device registration/connection propagates asynchronously — the device
             //    is NOT in Wearables.shared.devices the instant startRegistration() returns.
             //    Wait for it to appear before creating a session, else start() throws
             //    noEligibleDevice (no device in a connected link state yet).
             let device = await waitForDevice(timeout: 8.0)
-            print("GlassesManager: device after wait=\(String(describing: device)), devices=\(MWDATCore.Wearables.shared.devices)")
 
             let selector: any MWDATCore.DeviceSelector
             if let device {
@@ -90,7 +65,6 @@ final class GlassesManager: NSObject, ObservableObject {
 
             // 5. Create the session and start it, retrying while the link settles into
             //    a connected/eligible state.
-            print("GlassesManager: creating session, activeDevice=\(String(describing: selector.activeDevice))")
             let newSession = try MWDATCore.Wearables.shared.createSession(deviceSelector: selector)
             try await startSessionWithRetry(newSession, attempts: 10, delay: 0.5)
             session = newSession
@@ -117,13 +91,12 @@ final class GlassesManager: NSObject, ObservableObject {
     /// (connected) state. Rethrows the last error if all attempts fail.
     private func startSessionWithRetry(_ session: MWDATCore.DeviceSession, attempts: Int, delay: TimeInterval) async throws {
         var lastError: Error?
-        for attempt in 1...attempts {
+        for _ in 1...attempts {
             do {
                 try session.start()
                 return
             } catch MWDATCore.DeviceSessionError.noEligibleDevice {
                 lastError = MWDATCore.DeviceSessionError.noEligibleDevice
-                print("GlassesManager: start attempt \(attempt)/\(attempts) — noEligibleDevice, retrying")
                 try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             }
         }
@@ -144,11 +117,7 @@ final class GlassesManager: NSObject, ObservableObject {
         let writer = VideoFileWriter(outputURL: outputURL)
         videoFileWriter = writer
 
-        let counter = FrameCounter()
-        frameCounter = counter
         frameListenerToken = newStream.videoFramePublisher.listen { [weak writer] frame in
-            let hasImageBuffer = CMSampleBufferGetImageBuffer(frame.sampleBuffer) != nil
-            counter.record(hasImageBuffer: hasImageBuffer)
             writer?.append(frame.sampleBuffer)
         }
         // Surface any stream-level errors (decode failures, permission, hinges, thermal).
@@ -158,7 +127,6 @@ final class GlassesManager: NSObject, ObservableObject {
 
         Task { await newStream.start() }
         isRecording = true
-        print("GlassesManager: startVideoCapture — stream added and started")
     }
 
     func stopVideoCapture() async -> URL? {
@@ -175,16 +143,9 @@ final class GlassesManager: NSObject, ObservableObject {
         self.stream = nil
         isRecording = false
 
-        if let counter = frameCounter {
-            print("GlassesManager: stopVideoCapture — frames total=\(counter.total), withImageBuffer=\(counter.withImageBuffer)")
-        }
-        frameCounter = nil
-
         guard let writer = videoFileWriter else { return nil }
         videoFileWriter = nil
-        let url = await writer.finish()
-        print("GlassesManager: writer.finish() returned \(String(describing: url))")
-        return url
+        return await writer.finish()
     }
 
     #if DEBUG
