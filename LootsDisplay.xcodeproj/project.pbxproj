@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D0EDF0952F0D00000038104A /* MWDATCore in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0922F0D00000038104A /* MWDATCore */; };
+		D0EDF0962F0D00000038104A /* MWDATCamera in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0932F0D00000038104A /* MWDATCamera */; };
+		D0EDF0972F0D00000038104A /* MWDATMockDevice in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0942F0D00000038104A /* MWDATMockDevice */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D0EDF02A2F0189F70038104A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -22,12 +28,6 @@
 			remoteInfo = LootsDisplay;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXBuildFile section */
-		D0EDF0952F0D00000038104A /* MWDATCore in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0922F0D00000038104A /* MWDATCore */; };
-		D0EDF0962F0D00000038104A /* MWDATCamera in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0932F0D00000038104A /* MWDATCamera */; };
-		D0EDF0972F0D00000038104A /* MWDATMockDevice in Frameworks */ = {isa = PBXBuildFile; productRef = D0EDF0942F0D00000038104A /* MWDATMockDevice */; };
-/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		D0EDF01C2F0189F60038104A /* LootsDisplay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LootsDisplay.app; sourceTree = BUILT_PRODUCTS_DIR; };

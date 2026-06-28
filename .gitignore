@@ -5,3 +5,7 @@ airpodsch.png
 airpodsen.png
 airpodses.png
 LootsDisplay.xcodeproj/xcuserdata/natalyavinogradskaya.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
+
+# Stray runtime/export artifacts that can land in the source folder
+LootsDisplay/*.mov
+LootsDisplay/SensorLog_*.csv
